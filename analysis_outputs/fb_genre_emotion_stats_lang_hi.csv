@@ -1,0 +1,5 @@
+Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Entertainment,Controversy,4,5110.0,800.0,1277.5,16.533139111434814,hi
+Crime,Shock -VE,10,67695.0,754.0,6769.5,9.832483612527309,hi
+Off-beat,Surprise +VE,5,7470.0,751.0,1494.0,9.39548434085944,hi
+Entertainment,Curiosity,5,1976.0,249.0,395.2,-63.72906045156592,hi

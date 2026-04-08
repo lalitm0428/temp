@@ -1,0 +1,5 @@
+Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Crime,Shock -VE,12,495.0,40.0,41.25,12.676056338028175,ml
+Current-Affairs,Surprise +VE,9,321.0,39.0,35.666666666666664,9.859154929577475,ml
+Current-Affairs,Shock -VE,13,426.0,34.0,32.76923076923077,-4.225352112676061,ml
+Business,Shock -VE,10,276.0,27.0,27.6,-23.943661971830988,ml

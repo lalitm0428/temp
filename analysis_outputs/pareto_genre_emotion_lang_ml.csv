@@ -1,0 +1,5 @@
+Genre.1,Emotions.1,posts,total_reach,reach_share_pct,cum_reach_pct,language
+Crime,Shock -VE,12,495.0,32.608695652173914,32.608695652173914,ml
+Current-Affairs,Shock -VE,13,426.0,28.063241106719367,60.67193675889328,ml
+Current-Affairs,Surprise +VE,9,321.0,21.14624505928854,81.81818181818181,ml
+Business,Shock -VE,10,276.0,18.181818181818183,100.0,ml

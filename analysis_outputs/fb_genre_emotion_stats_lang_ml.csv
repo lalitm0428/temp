@@ -1,0 +1,12 @@
+Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Entertainment,Surprise +VE,7,3050.0,187.0,435.7142857142857,56.48535564853556,ml
+International Politics,Shock -VE,7,4814.0,157.0,687.7142857142857,31.380753138075313,ml
+International Politics,Fear/Concern,7,2040.0,125.0,291.42857142857144,4.602510460251041,ml
+Current-Affairs,Happiness,5,864.0,122.0,172.8,2.092050209205021,ml
+Current-Affairs,Surprise +VE,17,14061.0,113.0,827.1176470588235,-5.4393305439330515,ml
+Current-Affairs,Shock -VE,19,8447.0,103.0,444.57894736842104,-13.807531380753135,ml
+Crime,Shock -VE,12,15444.0,96.0,1287.0,-19.665271966527197,ml
+Politics,Surprise +VE,7,851.0,85.0,121.57142857142857,-28.870292887029294,ml
+Current-Affairs,Curiosity,5,396.0,85.0,79.2,-28.870292887029294,ml
+Business,Shock -VE,7,691.0,77.0,98.71428571428571,-35.56485355648535,ml
+Politics,Curiosity,5,620.0,67.0,124.0,-43.93305439330544,ml

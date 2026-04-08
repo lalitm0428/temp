@@ -1,0 +1,2 @@
+min_posts_threshold,rows_total,rows_labeled,rows_after_genre_filter,rows_after_genre_emotion_filter,filtered_benchmark_median_reach,kept_genres_count,kept_genre_emotion_count,removed_genres_count,removed_genre_emotion_count
+8,18127,729,714,496,833.0,10,32,3,82

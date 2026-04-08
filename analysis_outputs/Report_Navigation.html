@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report Navigation Hub</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;600;700&display=swap');
+
+    :root {
+      --ink: #14324a;
+      --muted: #4f6679;
+      --surface: #f7fafc;
+      --card: #ffffff;
+      --line: #cdd9e6;
+      --accent-1: #0f766e;
+      --accent-2: #1d4ed8;
+      --chip-bg: #d8faf3;
+      --chip-line: #7adfd0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Manrope', 'Helvetica Neue', sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 5%, rgba(29, 78, 216, 0.12), transparent 45%),
+        radial-gradient(circle at 90% 0%, rgba(15, 118, 110, 0.15), transparent 42%),
+        var(--surface);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+
+    .hero {
+      border-radius: 16px;
+      padding: 20px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      box-shadow: 0 8px 20px rgba(20, 50, 74, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.2px;
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      opacity: 0.95;
+      font-size: 14px;
+    }
+
+    .switcher {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 140ms ease;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #d8faf3, #d9e8ff);
+      border-color: #94b8ff;
+      box-shadow: 0 3px 8px rgba(29, 78, 216, 0.16);
+    }
+
+    .panel {
+      display: none;
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: 0 8px 18px rgba(20, 50, 74, 0.06);
+      padding: 16px;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+    }
+
+    .panel .sub {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .group {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f9fcff;
+      padding: 12px;
+    }
+
+    .group h3 {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+    }
+
+    .links {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 10px;
+    }
+
+    .item {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid #dbe4ef;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+      transition: 140ms ease;
+    }
+
+    .item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(20, 50, 74, 0.1);
+      border-color: #9ec7ff;
+    }
+
+    .item .title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .item .meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    .badge {
+      margin-top: 4px;
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-line);
+      color: #0d5b52;
+    }
+
+    .hint {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <h1>Analysis Report Hub</h1>
+      <p>Use this page to jump into any report quickly. Select a platform, then open the analysis you want.</p>
+    </section>
+
+    <div class="switcher" role="tablist" aria-label="Platforms">
+      <button class="tab active" data-target="fb" role="tab" aria-selected="true">Facebook Reports</button>
+      <button class="tab" data-target="ig" role="tab" aria-selected="false">Instagram Reports</button>
+    </div>
+
+    <section id="fb" class="panel active" role="tabpanel">
+      <h2>Facebook</h2>
+      <p class="sub">Open any language analysis directly.</p>
+
+      <div class="group">
+        <h3>Language Analyses</h3>
+        <div class="links">
+          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_en.html">
+            <p class="title">English (EN)</p>
+            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_en.html</p>
+          </a>
+          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_hi.html">
+            <p class="title">Hindi (HI)</p>
+            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_hi.html</p>
+          </a>
+          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ml.html">
+            <p class="title">Malayalam (ML)</p>
+            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ml.html</p>
+          </a>
+          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ta.html">
+            <p class="title">Tamil (TA)</p>
+            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ta.html</p>
+          </a>
+          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_te.html">
+            <p class="title">Telugu (TE)</p>
+            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_te.html</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="ig" class="panel" role="tabpanel" aria-hidden="true">
+      <h2>Instagram</h2>
+      <p class="sub">Open any language analysis directly.</p>
+
+      <div class="group">
+        <h3>Language Analyses</h3>
+        <div class="links">
+          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_en.html">
+            <p class="title">English (EN)</p>
+            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_en.html</p>
+          </a>
+          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_hi.html">
+            <p class="title">Hindi (HI)</p>
+            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_hi.html</p>
+          </a>
+          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_ml.html">
+            <p class="title">Malayalam (ML)</p>
+            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_ml.html</p>
+          </a>
+          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_ta.html">
+            <p class="title">Tamil (TA)</p>
+            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_ta.html</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <p class="hint">Tip: open this file locally, then click through any analysis page directly.</p>
+  </main>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.panel');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.target;
+
+        tabs.forEach((t) => {
+          const isActive = t === tab;
+          t.classList.toggle('active', isActive);
+          t.setAttribute('aria-selected', String(isActive));
+        });
+
+        panels.forEach((panel) => {
+          const isActive = panel.id === target;
+          panel.classList.toggle('active', isActive);
+          panel.setAttribute('aria-hidden', String(!isActive));
+        });
+      });
+    });
+  </script>
+</body>
+</html>

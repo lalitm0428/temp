@@ -1,0 +1,4 @@
+Genre.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Crime,10,67695.0,754.0,6769.5,9.832483612527309,hi
+Off-beat,5,7470.0,751.0,1494.0,9.39548434085944,hi
+Entertainment,9,7086.0,354.0,787.3333333333334,-48.4340859431901,hi

@@ -1,0 +1,7 @@
+Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Entertainment,Sadness,5,417575.0,15826.0,83515.0,471.7485549132948,te
+Entertainment,Curiosity,5,96707.0,14338.0,19341.4,417.99132947976875,te
+Entertainment,Controversy,8,368351.0,5149.5,46043.875,86.03684971098266,te
+Current-Affairs,Shock -VE,7,58924.0,2167.0,8417.714285714286,-21.71242774566474,te
+Crime,Sadness,6,34993.0,1385.5,5832.166666666667,-49.945809248554916,te
+Crime,Shock -VE,6,44971.0,227.0,7495.166666666667,-91.79913294797689,te

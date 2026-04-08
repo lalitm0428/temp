@@ -1,0 +1,4 @@
+Genre.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Entertainment,18,882633.0,11059.5,49035.166666666664,299.5484104046243,te
+Current-Affairs,7,58924.0,2167.0,8417.714285714286,-21.71242774566474,te
+Crime,12,79964.0,382.5,6663.666666666667,-86.18135838150289,te

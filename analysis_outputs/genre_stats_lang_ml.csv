@@ -1,0 +1,4 @@
+Genre.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Crime,12,495.0,40.0,41.25,12.676056338028175,ml
+Current-Affairs,22,747.0,36.5,33.95454545454545,2.8169014084507005,ml
+Business,10,276.0,27.0,27.6,-23.943661971830988,ml

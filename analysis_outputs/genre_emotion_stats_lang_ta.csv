@@ -1,0 +1,6 @@
+Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
+Politics,Surprise +VE,10,603.0,57.0,60.3,11.764705882352944,ta
+Politics,Controversy,7,405.0,57.0,57.857142857142854,11.764705882352944,ta
+Current-Affairs,Shock -VE,5,255.0,51.0,51.0,0.0,ta
+Politics,Shock -VE,7,278.0,44.0,39.714285714285715,-13.725490196078427,ta
+Politics,Curiosity,5,181.0,34.0,36.2,-33.333333333333336,ta
