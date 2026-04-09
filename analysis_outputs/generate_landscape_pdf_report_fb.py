@@ -14,7 +14,9 @@ from weasyprint import HTML
 MIN_POSTS = 8
 FALLBACK_THRESHOLDS = (8, 5, 4)
 MIN_COMBO_BUCKETS = 4
-NEUTRAL_MEDIAN_BAND = 750
+NEUTRAL_MEDIAN_BAND_MIN = 100
+NEUTRAL_MEDIAN_BAND_MAX = 750
+NEUTRAL_MEDIAN_BAND_PCT = 0.15
 
 SRC = Path('/Users/apple/temp/DH Social Media Metrics FB Data.csv')
 OUT = Path('/Users/apple/temp/analysis_outputs')
@@ -129,6 +131,11 @@ def format_human_number(value: object) -> str:
     return str(value)
 
 
+def compute_neutral_median_band(benchmark_median: float) -> float:
+    dynamic_band = benchmark_median * NEUTRAL_MEDIAN_BAND_PCT
+    return float(min(NEUTRAL_MEDIAN_BAND_MAX, max(NEUTRAL_MEDIAN_BAND_MIN, dynamic_band)))
+
+
 def save_chart(fig: go.Figure, out_file: Path, width: int = 1600, height: int = 900) -> Path:
     fig.update_layout(template='plotly_white', margin=dict(l=45, r=25, t=65, b=45), font=dict(size=16))
     fig.write_image(str(out_file), width=width, height=height, scale=2)
@@ -138,14 +145,6 @@ def save_chart(fig: go.Figure, out_file: Path, width: int = 1600, height: int = 
 def image_data_uri(path: Path) -> str:
     b64 = base64.b64encode(path.read_bytes()).decode('ascii')
     return f'data:image/png;base64,{b64}'
-
-
-def chart_html_fragment(fig: go.Figure) -> str:
-    return fig.to_html(
-        full_html=False,
-        include_plotlyjs=False,
-        config={'responsive': True, 'displaylogo': False},
-    )
 
 
 def format_date_range(series: pd.Series) -> str:
@@ -249,6 +248,11 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
 
     benchmark_median = float(filtered_combo['reach'].median())
 
+    neutral_median_band = compute_neutral_median_band(benchmark_median)
+    neutral_median_band_pct = (neutral_median_band / benchmark_median * 100.0) if benchmark_median else 0.0
+    performing_cutoff_median = benchmark_median + neutral_median_band
+    not_performing_cutoff_median = benchmark_median - neutral_median_band
+
     genre_stats = (
         filtered_combo.groupby('Genre.1')
         .agg(
@@ -301,7 +305,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     high_supply_performing = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] >= threshold)
-            & (combo_stats_all_supply['median_gap'] > NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'] > neutral_median_band)
         ]
         .copy()
         .sort_values(['median_reach', 'posts'], ascending=[False, False])
@@ -311,7 +315,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     high_supply_neutral = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] >= threshold)
-            & (combo_stats_all_supply['median_gap'].abs() <= NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'].abs() <= neutral_median_band)
         ]
         .copy()
         .sort_values(['posts', 'median_reach'], ascending=[False, False])
@@ -321,7 +325,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     high_supply_not_performing = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] >= threshold)
-            & (combo_stats_all_supply['median_gap'] < -NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'] < -neutral_median_band)
         ]
         .copy()
         .sort_values(['median_reach', 'posts'], ascending=[True, False])
@@ -331,7 +335,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     low_supply_performing = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] < threshold)
-            & (combo_stats_all_supply['median_gap'] > NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'] > neutral_median_band)
         ]
         .copy()
         .sort_values(['median_reach', 'posts'], ascending=[False, False])
@@ -392,6 +396,10 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
         'filtered_rows': len(filtered_combo),
         'filtered_date_range': format_date_range(filtered_combo['post_date']),
         'benchmark_median': benchmark_median,
+        'neutral_median_band': neutral_median_band,
+        'neutral_median_band_pct': neutral_median_band_pct,
+        'performing_cutoff_median': performing_cutoff_median,
+        'not_performing_cutoff_median': not_performing_cutoff_median,
         'removed_genres': removed_genres,
         'removed_combos': removed_combos,
         'genre_stats': genre_stats,
@@ -417,29 +425,52 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
 def add_charts_to_payload(payload: dict) -> dict:
     if payload['empty']:
         payload['chart_uris'] = {}
-        payload['chart_html'] = {}
         return payload
 
     lang = payload['language']
     slug = safe_token(lang)
+    threshold = int(payload['threshold'])
     genre_stats = payload['genre_stats']
     pareto_genre = payload['pareto_genre']
     combo_stats = payload['combo_stats']
     pareto_combo = payload['pareto_combo']
 
+    # Defensive threshold enforcement for chart inputs.
+    genre_stats_plot = genre_stats[genre_stats['posts'] >= threshold].copy()
+    pareto_genre_plot = pareto_genre[pareto_genre['posts'] >= threshold].copy()
+    combo_stats_plot = combo_stats[combo_stats['posts'] >= threshold].copy()
+    pareto_combo_plot = pareto_combo[pareto_combo['posts'] >= threshold].copy()
+
+    if genre_stats_plot.empty:
+        genre_stats_plot = genre_stats.copy()
+    if pareto_genre_plot.empty:
+        pareto_genre_plot = pareto_genre.copy()
+    if combo_stats_plot.empty:
+        combo_stats_plot = combo_stats.copy()
+    if pareto_combo_plot.empty:
+        pareto_combo_plot = pareto_combo.copy()
+
+    if (
+        (not genre_stats_plot.empty and (genre_stats_plot['posts'] < threshold).any())
+        or (not pareto_genre_plot.empty and (pareto_genre_plot['posts'] < threshold).any())
+        or (not combo_stats_plot.empty and (combo_stats_plot['posts'] < threshold).any())
+        or (not pareto_combo_plot.empty and (pareto_combo_plot['posts'] < threshold).any())
+    ):
+        raise ValueError(f'Chart dataset includes rows below threshold={threshold} for language={lang}')
+
     fig_genre = px.bar(
-        genre_stats.sort_values('median_reach', ascending=True),
+        genre_stats_plot.sort_values('median_reach', ascending=True),
         x='median_reach', y='Genre.1', orientation='h', text='posts',
         color='median_reach', color_continuous_scale='Tealgrn',
         labels={'median_reach': 'Median Reach', 'Genre.1': 'Genre'}
     )
-    fig_genre.update_layout(title=f'Facebook {lang.upper()}: Genre Median Reach')
+    fig_genre.update_layout(title=f'Facebook {lang.upper()}: Genre Median Reach (posts >= {threshold})')
 
     fig_pareto = make_subplots(specs=[[{'secondary_y': True}]])
     fig_pareto.add_trace(
         go.Bar(
-            x=pareto_genre['Genre.1'],
-            y=pareto_genre['reach_share_pct'],
+            x=pareto_genre_plot['Genre.1'],
+            y=pareto_genre_plot['reach_share_pct'],
             name='Reach Share %',
             marker_color='#1d4ed8'
         ),
@@ -447,8 +478,8 @@ def add_charts_to_payload(payload: dict) -> dict:
     )
     fig_pareto.add_trace(
         go.Scatter(
-            x=pareto_genre['Genre.1'],
-            y=pareto_genre['cum_reach_pct'],
+            x=pareto_genre_plot['Genre.1'],
+            y=pareto_genre_plot['cum_reach_pct'],
             mode='lines+markers',
             name='Cumulative Reach %',
             line=dict(color='#0f766e', width=3)
@@ -458,9 +489,9 @@ def add_charts_to_payload(payload: dict) -> dict:
     fig_pareto.add_hline(y=80, line_dash='dash', line_color='#ef4444', annotation_text='80%')
     fig_pareto.update_yaxes(title_text='Reach Share %', secondary_y=False)
     fig_pareto.update_yaxes(title_text='Cumulative Reach %', secondary_y=True, range=[0, 105])
-    fig_pareto.update_layout(title=f'Facebook {lang.upper()}: Pareto by Genre')
+    fig_pareto.update_layout(title=f'Facebook {lang.upper()}: Pareto by Genre (posts >= {threshold})')
 
-    top_combo_median = combo_stats.head(12).copy()
+    top_combo_median = combo_stats_plot.head(12).copy()
     top_combo_median['combo'] = top_combo_median.apply(lambda r: f"{r['Genre.1']} | {r['Emotions.1']}", axis=1)
     fig_combo_median = px.bar(
         top_combo_median.sort_values('median_reach', ascending=True),
@@ -468,9 +499,9 @@ def add_charts_to_payload(payload: dict) -> dict:
         color='median_reach', color_continuous_scale='Viridis',
         labels={'median_reach': 'Median Reach', 'combo': 'Genre | Emotion'}
     )
-    fig_combo_median.update_layout(title=f'Facebook {lang.upper()}: Genre x Emotion by Median Reach')
+    fig_combo_median.update_layout(title=f'Facebook {lang.upper()}: Genre x Emotion by Median Reach (posts >= {threshold})')
 
-    top_combo_share = pareto_combo.head(12).copy()
+    top_combo_share = pareto_combo_plot.head(12).copy()
     top_combo_share['combo'] = top_combo_share.apply(lambda r: f"{r['Genre.1']} | {r['Emotions.1']}", axis=1)
     fig_combo_share = px.bar(
         top_combo_share.sort_values('reach_share_pct', ascending=True),
@@ -479,7 +510,7 @@ def add_charts_to_payload(payload: dict) -> dict:
         color='reach_share_pct', color_continuous_scale='Blues',
         labels={'reach_share_pct': 'Reach Share %', 'combo': 'Genre | Emotion'}
     )
-    fig_combo_share.update_layout(title=f'Facebook {lang.upper()}: Genre x Emotion by Reach Share')
+    fig_combo_share.update_layout(title=f'Facebook {lang.upper()}: Genre x Emotion by Reach Share (posts >= {threshold})')
 
     chart_files = {
         'genre_median': save_chart(fig_genre, CHARTS / f'fb_{slug}_genre_median.png', 1500, 900),
@@ -487,14 +518,7 @@ def add_charts_to_payload(payload: dict) -> dict:
         'combo_median': save_chart(fig_combo_median, CHARTS / f'fb_{slug}_combo_median.png', 1700, 1000),
         'combo_share': save_chart(fig_combo_share, CHARTS / f'fb_{slug}_combo_share.png', 1700, 1000),
     }
-    chart_figures = {
-        'genre_median': fig_genre,
-        'genre_pareto': fig_pareto,
-        'combo_median': fig_combo_median,
-        'combo_share': fig_combo_share,
-    }
     payload['chart_uris'] = {k: image_data_uri(v) for k, v in chart_files.items()}
-    payload['chart_html'] = {k: chart_html_fragment(v) for k, v in chart_figures.items()}
     return payload
 
 
@@ -619,41 +643,34 @@ def render_language_section(section: dict, idx: int) -> str:
     <span class="chip">Labeled date range: {section['labeled_date_range']}</span>
     <span class="chip">Filtered date range: {section['filtered_date_range']}</span>
             <span class="chip">Filtered median reach: {format_human_number(section['benchmark_median'])}</span>
+      <span class="chip">Neutral band: +/- {format_human_number(section['neutral_median_band'])} (+/-{section['neutral_median_band_pct']:.1f}%)</span>
+      <span class="chip">Performing cutoff: &gt; {format_human_number(section['performing_cutoff_median'])}</span>
+      <span class="chip">Not performing cutoff: &lt; {format_human_number(section['not_performing_cutoff_median'])}</span>
       <span class="chip">Removed genres (&lt;{threshold}): {len(section['removed_genres'])}</span>
       <span class="chip">Removed genre x emotion (&lt;{threshold}): {len(section['removed_combos'])}</span>
       <span class="chip">Pareto 80% genres: {section['genres_to_80']}</span>
       <span class="chip">Pareto 80% genre x emotion: {section['combos_to_80']}</span>
-            <div class="metric-row">
-                <div class="metric-card">
-                    <div class="metric-k">Median Reach Benchmark (lift baseline)</div>
-                    <div class="metric-v">{format_human_number(section['benchmark_median'])}</div>
-                </div>
-            </div>
     </section>
 
     <section class="section two">
       <div class="chart">
         <h3>{lang_label}: Genre Median Reach</h3>
-                <div class="chart-interactive">{section['chart_html']['genre_median']}</div>
-                <img class="chart-static" src="{section['chart_uris']['genre_median']}" alt="{lang_label} Genre Median Reach" />
+                                <img src="{section['chart_uris']['genre_median']}" alt="{lang_label} Genre Median Reach" />
       </div>
       <div class="chart">
         <h3>{lang_label}: Pareto by Genre</h3>
-                <div class="chart-interactive">{section['chart_html']['genre_pareto']}</div>
-                <img class="chart-static" src="{section['chart_uris']['genre_pareto']}" alt="{lang_label} Pareto by Genre" />
+                                <img src="{section['chart_uris']['genre_pareto']}" alt="{lang_label} Pareto by Genre" />
       </div>
     </section>
 
     <section class="section two">
       <div class="chart">
         <h3>{lang_label}: Genre x Emotion by Median Reach</h3>
-                <div class="chart-interactive">{section['chart_html']['combo_median']}</div>
-                <img class="chart-static" src="{section['chart_uris']['combo_median']}" alt="{lang_label} Genre x Emotion Median" />
+                                <img src="{section['chart_uris']['combo_median']}" alt="{lang_label} Genre x Emotion Median" />
       </div>
       <div class="chart">
         <h3>{lang_label}: Genre x Emotion by Reach Share</h3>
-                <div class="chart-interactive">{section['chart_html']['combo_share']}</div>
-                <img class="chart-static" src="{section['chart_uris']['combo_share']}" alt="{lang_label} Genre x Emotion Reach Share" />
+                                <img src="{section['chart_uris']['combo_share']}" alt="{lang_label} Genre x Emotion Reach Share" />
       </div>
     </section>
 
@@ -732,7 +749,6 @@ def build_single_language_html(section: dict) -> str:
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Facebook Reach Report ({language_label})</title>
-    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         @page {{ size: A4 landscape; margin: 10mm; }}
         * {{ box-sizing: border-box; }}
@@ -753,25 +769,19 @@ def build_single_language_html(section: dict) -> str:
         .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
         .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
         .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
-        .chart-interactive .plotly-graph-div {{ width: 100% !important; height: 420px !important; }}
-        .chart-static {{ display: none; width: 100%; height: auto; }}
+        .chart img {{ width: 100%; height: auto; display: block; }}
                 .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
         .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
         .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
                 .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
         .data-table th {{ background: #edf3f9; font-weight: 700; }}
         .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
-        .metric-row {{ margin-top: 10px; }}
-        .metric-card {{ display: inline-block; min-width: 240px; border: 1px solid #cfd9e5; border-radius: 12px; background: linear-gradient(135deg, #eaf7f4, #eef4ff); padding: 8px 12px; }}
-        .metric-k {{ font-size: 10px; color: #385269; text-transform: uppercase; }}
-        .metric-v {{ font-size: 20px; font-weight: 700; color: #1c3347; margin-top: 2px; }}
         .muted {{ color: #5c6b7a; font-size: 12px; }}
                 @media print {{
                     .top-nav {{ display: none !important; }}
                     .two {{ display: block; }}
                     .two > div {{ margin-bottom: 10px; }}
-                    .chart-interactive {{ display: none !important; }}
-                    .chart-static {{ display: block !important; max-height: 105mm; object-fit: contain; }}
+                    .chart img {{ max-height: 105mm; object-fit: contain; }}
                 }}
     </style>
 </head>
@@ -859,7 +869,6 @@ def main() -> None:
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Facebook Reach Report by Language (Adaptive 8/5/4)</title>
-    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     @page {{ size: A4 landscape; margin: 10mm; }}
     * {{ box-sizing: border-box; }}
@@ -880,25 +889,19 @@ def main() -> None:
     .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
     .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
     .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
-    .chart-interactive .plotly-graph-div {{ width: 100% !important; height: 420px !important; }}
-    .chart-static {{ display: none; width: 100%; height: auto; }}
+    .chart img {{ width: 100%; height: auto; display: block; }}
         .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
     .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
     .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
         .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
     .data-table th {{ background: #edf3f9; font-weight: 700; }}
     .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
-    .metric-row {{ margin-top: 10px; }}
-    .metric-card {{ display: inline-block; min-width: 240px; border: 1px solid #cfd9e5; border-radius: 12px; background: linear-gradient(135deg, #eaf7f4, #eef4ff); padding: 8px 12px; }}
-    .metric-k {{ font-size: 10px; color: #385269; text-transform: uppercase; }}
-    .metric-v {{ font-size: 20px; font-weight: 700; color: #1c3347; margin-top: 2px; }}
     .muted {{ color: #5c6b7a; font-size: 12px; }}
         @media print {{
             .top-nav {{ display: none !important; }}
             .two {{ display: block; }}
             .two > div {{ margin-bottom: 10px; }}
-            .chart-interactive {{ display: none !important; }}
-            .chart-static {{ display: block !important; max-height: 105mm; object-fit: contain; }}
+            .chart img {{ max-height: 105mm; object-fit: contain; }}
         }}
     .page-break {{ page-break-before: always; break-before: page; }}
   </style>
