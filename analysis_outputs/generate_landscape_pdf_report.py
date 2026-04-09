@@ -14,7 +14,9 @@ from weasyprint import HTML
 MIN_POSTS = 8
 FALLBACK_THRESHOLDS = (8, 5, 4)
 MIN_COMBO_BUCKETS = 4
-NEUTRAL_MEDIAN_BAND = 750
+NEUTRAL_MEDIAN_BAND_MIN = 100
+NEUTRAL_MEDIAN_BAND_MAX = 750
+NEUTRAL_MEDIAN_BAND_PCT = 0.15
 
 SRC = Path('/Users/apple/temp/DH Social Media Metrics IG Base Data (1).csv')
 OUT = Path('/Users/apple/temp/analysis_outputs')
@@ -85,6 +87,11 @@ def format_human_number(value: object) -> str:
 
         return f"{int(round(n))}"
     return str(value)
+
+
+def compute_neutral_median_band(benchmark_median: float) -> float:
+    dynamic_band = benchmark_median * NEUTRAL_MEDIAN_BAND_PCT
+    return float(min(NEUTRAL_MEDIAN_BAND_MAX, max(NEUTRAL_MEDIAN_BAND_MIN, dynamic_band)))
 
 
 def save_chart(fig: go.Figure, out_file: Path, width: int = 1600, height: int = 900) -> Path:
@@ -199,6 +206,11 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
 
     benchmark_median = float(filtered_combo['reach'].median())
 
+    neutral_median_band = compute_neutral_median_band(benchmark_median)
+    neutral_median_band_pct = (neutral_median_band / benchmark_median * 100.0) if benchmark_median else 0.0
+    performing_cutoff_median = benchmark_median + neutral_median_band
+    not_performing_cutoff_median = benchmark_median - neutral_median_band
+
     genre_stats = (
         filtered_combo.groupby('Genre.1')
         .agg(
@@ -251,7 +263,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     high_supply_performing = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] >= threshold)
-            & (combo_stats_all_supply['median_gap'] > NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'] > neutral_median_band)
         ]
         .copy()
         .sort_values(['median_reach', 'posts'], ascending=[False, False])
@@ -261,7 +273,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     high_supply_neutral = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] >= threshold)
-            & (combo_stats_all_supply['median_gap'].abs() <= NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'].abs() <= neutral_median_band)
         ]
         .copy()
         .sort_values(['posts', 'median_reach'], ascending=[False, False])
@@ -271,7 +283,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     high_supply_not_performing = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] >= threshold)
-            & (combo_stats_all_supply['median_gap'] < -NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'] < -neutral_median_band)
         ]
         .copy()
         .sort_values(['median_reach', 'posts'], ascending=[True, False])
@@ -281,7 +293,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     low_supply_performing = (
         combo_stats_all_supply[
             (combo_stats_all_supply['posts'] < threshold)
-            & (combo_stats_all_supply['median_gap'] > NEUTRAL_MEDIAN_BAND)
+            & (combo_stats_all_supply['median_gap'] > neutral_median_band)
         ]
         .copy()
         .sort_values(['median_reach', 'posts'], ascending=[False, False])
@@ -342,6 +354,10 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
         'filtered_rows': len(filtered_combo),
         'filtered_date_range': format_date_range(filtered_combo['post_date']),
         'benchmark_median': benchmark_median,
+        'neutral_median_band': neutral_median_band,
+        'neutral_median_band_pct': neutral_median_band_pct,
+        'performing_cutoff_median': performing_cutoff_median,
+        'not_performing_cutoff_median': not_performing_cutoff_median,
         'removed_genres': removed_genres,
         'removed_combos': removed_combos,
         'genre_stats': genre_stats,
@@ -585,16 +601,13 @@ def render_language_section(section: dict, idx: int) -> str:
     <span class="chip">Labeled date range: {section['labeled_date_range']}</span>
     <span class="chip">Filtered date range: {section['filtered_date_range']}</span>
             <span class="chip">Filtered median reach: {format_human_number(section['benchmark_median'])}</span>
+      <span class="chip">Neutral band: +/- {format_human_number(section['neutral_median_band'])} (+/-{section['neutral_median_band_pct']:.1f}%)</span>
+      <span class="chip">Performing cutoff: &gt; {format_human_number(section['performing_cutoff_median'])}</span>
+      <span class="chip">Not performing cutoff: &lt; {format_human_number(section['not_performing_cutoff_median'])}</span>
       <span class="chip">Removed genres (&lt;{threshold}): {len(section['removed_genres'])}</span>
       <span class="chip">Removed genre x emotion (&lt;{threshold}): {len(section['removed_combos'])}</span>
       <span class="chip">Pareto 80% genres: {section['genres_to_80']}</span>
       <span class="chip">Pareto 80% genre x emotion: {section['combos_to_80']}</span>
-            <div class="metric-row">
-                <div class="metric-card">
-                    <div class="metric-k">Median Reach Benchmark (lift baseline)</div>
-                    <div class="metric-v">{format_human_number(section['benchmark_median'])}</div>
-                </div>
-            </div>
     </section>
 
     <section class="section two">
@@ -721,10 +734,6 @@ def build_single_language_html(section: dict) -> str:
                 .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
         .data-table th {{ background: #edf3f9; font-weight: 700; }}
         .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #f8b58a; background: #fff1e8; color: #7a2f0b; font-size: 10px; margin: 0 6px 6px 0; }}
-        .metric-row {{ margin-top: 10px; }}
-        .metric-card {{ display: inline-block; min-width: 240px; border: 1px solid #d8c4f2; border-radius: 12px; background: linear-gradient(135deg, #fff1e8, #f5ebff); padding: 8px 12px; }}
-        .metric-k {{ font-size: 10px; color: #5b4c6f; text-transform: uppercase; }}
-        .metric-v {{ font-size: 20px; font-weight: 700; color: #2f1f45; margin-top: 2px; }}
         .muted {{ color: #5c6b7a; font-size: 12px; }}
                 @media print {{
                     .top-nav {{ display: none !important; }}
@@ -845,10 +854,6 @@ def main() -> None:
         .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
     .data-table th {{ background: #edf3f9; font-weight: 700; }}
     .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #f8b58a; background: #fff1e8; color: #7a2f0b; font-size: 10px; margin: 0 6px 6px 0; }}
-    .metric-row {{ margin-top: 10px; }}
-    .metric-card {{ display: inline-block; min-width: 240px; border: 1px solid #d8c4f2; border-radius: 12px; background: linear-gradient(135deg, #fff1e8, #f5ebff); padding: 8px 12px; }}
-    .metric-k {{ font-size: 10px; color: #5b4c6f; text-transform: uppercase; }}
-    .metric-v {{ font-size: 20px; font-weight: 700; color: #2f1f45; margin-top: 2px; }}
     .muted {{ color: #5c6b7a; font-size: 12px; }}
         @media print {{
             .top-nav {{ display: none !important; }}
