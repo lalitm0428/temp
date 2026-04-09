@@ -69,9 +69,21 @@ def format_human_number(value: object) -> str:
         return ''
     if isinstance(value, (int, np.integer, float, np.floating)):
         n = float(value)
-        if abs(n) >= 1_000_000:
-            return f"{int(round(n / 1_000_000.0)):,} Million"
-        return f"{int(round(n)):,}"
+        sign = '-' if n < 0 else ''
+        abs_n = abs(n)
+
+        if abs_n >= 1_000_000:
+            compact = f"{abs_n / 1_000_000:.1f}".rstrip('0').rstrip('.')
+            return f"{sign}{compact}m"
+
+        if abs_n >= 100_000:
+            return f"{sign}{int(round(abs_n / 1_000))}k"
+
+        if abs_n >= 1_000:
+            compact = f"{abs_n / 1_000:.1f}".rstrip('0').rstrip('.')
+            return f"{sign}{compact}k"
+
+        return f"{int(round(n))}"
     return str(value)
 
 
@@ -84,6 +96,14 @@ def save_chart(fig: go.Figure, out_file: Path, width: int = 1600, height: int = 
 def image_data_uri(path: Path) -> str:
     b64 = base64.b64encode(path.read_bytes()).decode('ascii')
     return f'data:image/png;base64,{b64}'
+
+
+def chart_html_fragment(fig: go.Figure) -> str:
+    return fig.to_html(
+        full_html=False,
+        include_plotlyjs=False,
+        config={'responsive': True, 'displaylogo': False},
+    )
 
 
 def format_date_range(series: pd.Series) -> str:
@@ -355,6 +375,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
 def add_charts_to_payload(payload: dict) -> dict:
     if payload['empty']:
         payload['chart_uris'] = {}
+        payload['chart_html'] = {}
         return payload
 
     lang = payload['language']
@@ -424,7 +445,14 @@ def add_charts_to_payload(payload: dict) -> dict:
         'combo_median': save_chart(fig_combo_median, CHARTS / f'{slug}_combo_median.png', 1700, 1000),
         'combo_share': save_chart(fig_combo_share, CHARTS / f'{slug}_combo_share.png', 1700, 1000),
     }
+    chart_figures = {
+        'genre_median': fig_genre,
+        'genre_pareto': fig_pareto,
+        'combo_median': fig_combo_median,
+        'combo_share': fig_combo_share,
+    }
     payload['chart_uris'] = {k: image_data_uri(v) for k, v in chart_files.items()}
+    payload['chart_html'] = {k: chart_html_fragment(v) for k, v in chart_figures.items()}
     return payload
 
 
@@ -564,22 +592,26 @@ def render_language_section(section: dict, idx: int) -> str:
     <section class="section two">
       <div class="chart">
         <h3>{lang_label}: Genre Median Reach</h3>
-        <img src="{section['chart_uris']['genre_median']}" alt="{lang_label} Genre Median Reach" />
+                <div class="chart-interactive">{section['chart_html']['genre_median']}</div>
+                <img class="chart-static" src="{section['chart_uris']['genre_median']}" alt="{lang_label} Genre Median Reach" />
       </div>
       <div class="chart">
         <h3>{lang_label}: Pareto by Genre</h3>
-        <img src="{section['chart_uris']['genre_pareto']}" alt="{lang_label} Pareto by Genre" />
+                <div class="chart-interactive">{section['chart_html']['genre_pareto']}</div>
+                <img class="chart-static" src="{section['chart_uris']['genre_pareto']}" alt="{lang_label} Pareto by Genre" />
       </div>
     </section>
 
     <section class="section two">
       <div class="chart">
         <h3>{lang_label}: Genre x Emotion by Median Reach</h3>
-        <img src="{section['chart_uris']['combo_median']}" alt="{lang_label} Genre x Emotion Median" />
+                <div class="chart-interactive">{section['chart_html']['combo_median']}</div>
+                <img class="chart-static" src="{section['chart_uris']['combo_median']}" alt="{lang_label} Genre x Emotion Median" />
       </div>
       <div class="chart">
         <h3>{lang_label}: Genre x Emotion by Reach Share</h3>
-        <img src="{section['chart_uris']['combo_share']}" alt="{lang_label} Genre x Emotion Reach Share" />
+                <div class="chart-interactive">{section['chart_html']['combo_share']}</div>
+                <img class="chart-static" src="{section['chart_uris']['combo_share']}" alt="{lang_label} Genre x Emotion Reach Share" />
       </div>
     </section>
 
@@ -658,11 +690,15 @@ def build_single_language_html(section: dict) -> str:
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reach Report ({language_label})</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         @page {{ size: A4 landscape; margin: 10mm; }}
         * {{ box-sizing: border-box; }}
         body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
         .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
+        .top-nav {{ margin-bottom: 10px; }}
+        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #7a2f0b; background: #fff1e8; border: 1px solid #f8b58a; border-radius: 999px; padding: 8px 12px; }}
+        .back-link:hover {{ background: #ffe9db; }}
         .hero {{ background: linear-gradient(135deg, #f97316 0%, #7e22ce 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
         .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
         .hero p {{ margin: 0; font-size: 13px; }}
@@ -675,7 +711,8 @@ def build_single_language_html(section: dict) -> str:
         .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
         .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
         .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
-        .chart img {{ width: 100%; height: auto; display: block; }}
+        .chart-interactive .plotly-graph-div {{ width: 100% !important; height: 420px !important; }}
+        .chart-static {{ display: none; width: 100%; height: auto; }}
                 .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
         .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
         .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
@@ -688,14 +725,19 @@ def build_single_language_html(section: dict) -> str:
         .metric-v {{ font-size: 20px; font-weight: 700; color: #2f1f45; margin-top: 2px; }}
         .muted {{ color: #5c6b7a; font-size: 12px; }}
                 @media print {{
+                    .top-nav {{ display: none !important; }}
                     .two {{ display: block; }}
                     .two > div {{ margin-bottom: 10px; }}
-                    .chart img {{ max-height: 105mm; object-fit: contain; }}
+                    .chart-interactive {{ display: none !important; }}
+                    .chart-static {{ display: block !important; max-height: 105mm; object-fit: contain; }}
                 }}
     </style>
 </head>
 <body>
     <div class="wrap">
+        <nav class="top-nav">
+            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+        </nav>
         <section class="hero">
             <h1>Reach Report: {language_label}</h1>
             <p>Standalone language report with adaptive thresholding (8 -> 5 -> 4).</p>
@@ -775,11 +817,15 @@ def main() -> None:
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reach Report by Language (Adaptive 8/5/4)</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     @page {{ size: A4 landscape; margin: 10mm; }}
     * {{ box-sizing: border-box; }}
     body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
     .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
+    .top-nav {{ margin-bottom: 10px; }}
+    .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #7a2f0b; background: #fff1e8; border: 1px solid #f8b58a; border-radius: 999px; padding: 8px 12px; }}
+    .back-link:hover {{ background: #ffe9db; }}
     .hero {{ background: linear-gradient(135deg, #f97316 0%, #7e22ce 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
     .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
     .hero p {{ margin: 0; font-size: 13px; }}
@@ -792,7 +838,8 @@ def main() -> None:
     .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
     .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
     .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
-    .chart img {{ width: 100%; height: auto; display: block; }}
+    .chart-interactive .plotly-graph-div {{ width: 100% !important; height: 420px !important; }}
+    .chart-static {{ display: none; width: 100%; height: auto; }}
         .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
     .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
     .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
@@ -805,15 +852,20 @@ def main() -> None:
     .metric-v {{ font-size: 20px; font-weight: 700; color: #2f1f45; margin-top: 2px; }}
     .muted {{ color: #5c6b7a; font-size: 12px; }}
         @media print {{
+            .top-nav {{ display: none !important; }}
             .two {{ display: block; }}
             .two > div {{ margin-bottom: 10px; }}
-            .chart img {{ max-height: 105mm; object-fit: contain; }}
+            .chart-interactive {{ display: none !important; }}
+            .chart-static {{ display: block !important; max-height: 105mm; object-fit: contain; }}
         }}
     .page-break {{ page-break-before: always; break-before: page; }}
   </style>
 </head>
 <body>
   <div class="wrap">
+        <nav class="top-nav">
+            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+        </nav>
     <section class="hero">
       <h1>Reach Report: Genre and Genre x Emotion by Language</h1>
       <p>Single HTML report with independent language-level adaptive filters (8 -> 5 -> 4).</p>
