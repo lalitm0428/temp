@@ -4,9 +4,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-SRC = Path('/Users/apple/temp/DH Social Media Metrics IG Base Data (1).csv')
+SRC = Path('/Users/apple/temp/analysis_outputs/Updated-Genre-Data/Instagram_Genre_Emotion_Reach_Analysis.csv')
 
 df = pd.read_csv(SRC, low_memory=False)
+
+if 'Genre.1' not in df.columns and 'genre' in df.columns:
+    df['Genre.1'] = df['genre']
+if 'Emotions.1' not in df.columns and 'emotion' in df.columns:
+    df['Emotions.1'] = df['emotion']
+if 'caption' not in df.columns:
+    df['caption'] = np.nan
+if 'permalink' not in df.columns and 'permalink_url' in df.columns:
+    df['permalink'] = df['permalink_url']
+if 'media_type' not in df.columns:
+    df['media_type'] = 'post'
 
 for c in ['reach', 'likes', 'comments', 'shares', 'saved', 'total_interactions']:
     if c in df.columns:
@@ -19,9 +30,11 @@ for c in ['Genre.1', 'Emotions.1', 'caption', 'permalink', 'post_created_date', 
 
 reach_df = df[df['reach'].notna()].copy()
 label_df = reach_df[reach_df['Genre.1'].notna() & reach_df['Emotions.1'].notna()].copy()
-label_df['post_date'] = pd.to_datetime(label_df['post_created_date'], format='%d-%b-%Y', errors='coerce')
+label_df['post_date'] = pd.to_datetime(label_df['post_created_date'], errors='coerce')
 
-print('Labeled date range:', label_df['post_date'].min().date(), 'to', label_df['post_date'].max().date())
+date_min = label_df['post_date'].min()
+date_max = label_df['post_date'].max()
+print('Labeled date range:', date_min.date() if pd.notna(date_min) else 'NA', 'to', date_max.date() if pd.notna(date_max) else 'NA')
 print('Labeled rows:', len(label_df))
 print('Median reach:', label_df['reach'].median())
 

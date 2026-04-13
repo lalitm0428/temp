@@ -13,13 +13,26 @@ import plotly.io as pio
 from plotly.subplots import make_subplots
 
 MIN_POSTS = 8
-SRC = Path('/Users/apple/temp/DH Social Media Metrics IG Base Data (1).csv')
+MAX_BAR_COUNT = 8
+SRC = Path('/Users/apple/temp/analysis_outputs/Updated-Genre-Data/Instagram_Genre_Emotion_Reach_Analysis.csv')
 OUT = Path('/Users/apple/temp/analysis_outputs')
 OUT.mkdir(exist_ok=True)
 
 
 def clean_frame(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
+
+    if 'Genre.1' not in out.columns and 'genre' in out.columns:
+        out['Genre.1'] = out['genre']
+    if 'Emotions.1' not in out.columns and 'emotion' in out.columns:
+        out['Emotions.1'] = out['emotion']
+    if 'media_type' not in out.columns:
+        out['media_type'] = 'post'
+    if 'permalink' not in out.columns and 'permalink_url' in out.columns:
+        out['permalink'] = out['permalink_url']
+    if 'caption' not in out.columns and 'message' in out.columns:
+        out['caption'] = out['message']
+
     numeric_cols = [
         'reach',
         'views',
@@ -39,14 +52,32 @@ def clean_frame(df: pd.DataFrame) -> pd.DataFrame:
             out[col] = out[col].astype(str).str.strip()
             out[col] = out[col].replace({'nan': np.nan, 'None': np.nan, '': np.nan})
 
-    out['post_date'] = pd.to_datetime(out.get('post_created_date'), format='%d-%b-%Y', errors='coerce')
+    out['post_date'] = pd.to_datetime(out.get('post_created_date'), errors='coerce')
     return out
 
 
 def to_html_table(df: pd.DataFrame, max_rows: int = 25) -> str:
     if df.empty:
-        return '<p class="muted">No rows to display.</p>'
-    return df.head(max_rows).to_html(index=False, classes='data-table', border=0, justify='left', escape=False)
+      return '<p class="muted">No rows to display.</p>'
+    formatted = df.head(max_rows).copy()
+    for col in formatted.columns:
+      if is_percentage_column(col):
+        formatted[col] = formatted[col].map(format_percentage_value)
+    return formatted.to_html(index=False, classes='data-table', border=0, justify='left', escape=False)
+
+
+def is_percentage_column(column_name: object) -> bool:
+  col = str(column_name).strip().lower()
+  return col.endswith('%') or 'pct' in col or 'percent' in col
+
+
+def format_percentage_value(value: object) -> str:
+  if value is None or (isinstance(value, float) and np.isnan(value)):
+    return ''
+  if isinstance(value, (int, np.integer, float, np.floating)):
+    text = f"{float(value):.1f}".rstrip('0').rstrip('.')
+    return f"{text}%"
+  return str(value)
 
 
 def make_plotly_block(fig, title: str, include_plotlyjs: bool = False) -> str:
@@ -244,8 +275,9 @@ def main() -> None:
     top_posts.to_csv(OUT / 'top_posts_8plus.csv', index=False)
 
     # Charts
+    genre_chart_data = genre_stats.sort_values('median_reach', ascending=False).head(MAX_BAR_COUNT).copy()
     fig_genre = px.bar(
-        genre_stats.sort_values('median_reach', ascending=True),
+      genre_chart_data.sort_values('median_reach', ascending=True),
         x='median_reach',
         y='Genre.1',
         orientation='h',
@@ -255,11 +287,12 @@ def main() -> None:
         labels={'median_reach': 'Median Reach', 'Genre.1': 'Genre', 'posts': 'Posts'},
     )
 
+    pareto_genre_chart = pareto_genre.head(MAX_BAR_COUNT).copy()
     fig_pareto = make_subplots(specs=[[{"secondary_y": True}]])
     fig_pareto.add_trace(
       go.Bar(
-        x=pareto_genre['Genre.1'],
-        y=pareto_genre['reach_share_pct'],
+        x=pareto_genre_chart['Genre.1'],
+        y=pareto_genre_chart['reach_share_pct'],
         name='Reach Share %',
         marker_color='#1d4ed8',
       ),
@@ -267,8 +300,8 @@ def main() -> None:
     )
     fig_pareto.add_trace(
       go.Scatter(
-        x=pareto_genre['Genre.1'],
-        y=pareto_genre['cum_reach_pct'],
+        x=pareto_genre_chart['Genre.1'],
+        y=pareto_genre_chart['cum_reach_pct'],
         mode='lines+markers',
         name='Cumulative Reach %',
         line=dict(color='#0f766e', width=3),
@@ -282,7 +315,7 @@ def main() -> None:
     fig_pareto.update_yaxes(title_text='Cumulative Reach %', secondary_y=True, range=[0, 105])
     fig_pareto.update_xaxes(title_text='Genre')
 
-    top_combo_median_chart = combo_stats.head(12).copy()
+    top_combo_median_chart = combo_stats.head(MAX_BAR_COUNT).copy()
     top_combo_median_chart['combo'] = top_combo_median_chart.apply(
       lambda row: f"{row['Genre.1']} | {row['Emotions.1']}", axis=1
     )
@@ -297,7 +330,7 @@ def main() -> None:
       labels={'median_reach': 'Median Reach', 'combo': 'Genre | Emotion', 'posts': 'Posts'},
     )
 
-    top_combo_share_chart = pareto_combo.head(12).copy()
+    top_combo_share_chart = pareto_combo.head(MAX_BAR_COUNT).copy()
     top_combo_share_chart['combo'] = top_combo_share_chart.apply(
       lambda row: f"{row['Genre.1']} | {row['Emotions.1']}", axis=1
     )
@@ -421,11 +454,11 @@ def main() -> None:
     <section class="section two">
       <div>
         <h2>Genre x Emotion: Top by Median Reach</h2>
-        {make_plotly_block(fig_combo_median, 'Top 12 Genre x Emotion by Median Reach')}
+        {make_plotly_block(fig_combo_median, 'Top 8 Genre x Emotion by Median Reach')}
       </div>
       <div>
         <h2>Genre x Emotion: Top by Reach Share</h2>
-        {make_plotly_block(fig_combo_share, 'Top 12 Genre x Emotion by Reach Share %')}
+        {make_plotly_block(fig_combo_share, 'Top 8 Genre x Emotion by Reach Share %')}
       </div>
     </section>
 

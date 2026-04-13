@@ -1,3 +1,12 @@
 Genre.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
-Current-Affairs,6,22.0,4.0,3.6666666666666665,0.0,ta
-Politics,25,102.0,4.0,4.08,0.0,ta
+Curent-Affairs,4,20,5.0,5.0,150.0,ta
+Politics,7,25,4.0,3.5714285714285716,100.0,ta
+Crime,2,7,3.5,3.5,75.0,ta
+Spiritual,1,3,3.0,3.0,50.0,ta
+Off-beat,9,24,3.0,2.6666666666666665,50.0,ta
+Entertainment,6,16,2.5,2.6666666666666665,25.0,ta
+Business,2,4,2.0,2.0,0.0,ta
+Current Affairs,1,2,2.0,2.0,0.0,ta
+Job,1,2,2.0,2.0,0.0,ta
+Sports,4,8,2.0,2.0,0.0,ta
+Lifestyle,4,7,1.5,1.75,-25.0,ta

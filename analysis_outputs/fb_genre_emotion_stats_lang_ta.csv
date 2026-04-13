@@ -1,5 +1,29 @@
 Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
-Politics,Controversy,7,34.0,5.0,4.857142857142857,25.0,ta
-Politics,Surprise +VE,11,44.0,4.0,4.0,0.0,ta
-Politics,Shock -VE,7,24.0,4.0,3.4285714285714284,0.0,ta
-Current-Affairs,Shock -VE,6,22.0,4.0,3.6666666666666665,0.0,ta
+Curent-Affairs,Shocking,1,7,7.0,7.0,250.0,ta
+Curent-Affairs,Surprise,1,7,7.0,7.0,250.0,ta
+Politics,Controversy,1,7,7.0,7.0,250.0,ta
+Politics,excitement,4,14,4.0,3.5,100.0,ta
+Crime,Shocking,2,7,3.5,3.5,75.0,ta
+Off-beat,excitement,3,10,3.0,3.3333333333333335,50.0,ta
+Entertainment,Shocking,2,6,3.0,3.0,50.0,ta
+Curent-Affairs,Controversy,1,3,3.0,3.0,50.0,ta
+Curent-Affairs,excitement,1,3,3.0,3.0,50.0,ta
+Entertainment,Gossip,1,3,3.0,3.0,50.0,ta
+Off-beat,Controversy,1,3,3.0,3.0,50.0,ta
+Spiritual,excitement,1,3,3.0,3.0,50.0,ta
+Entertainment,Controversy,2,5,2.5,2.5,25.0,ta
+Lifestyle,Shocking,2,5,2.5,2.5,25.0,ta
+Off-beat,Shocking,3,7,2.0,2.3333333333333335,0.0,ta
+Business,excitement,2,4,2.0,2.0,0.0,ta
+Current Affairs,Controversy,1,2,2.0,2.0,0.0,ta
+Entertainment,empathy,1,2,2.0,2.0,0.0,ta
+Job,excitement,1,2,2.0,2.0,0.0,ta
+Off-beat,Shock,1,2,2.0,2.0,0.0,ta
+Off-beat,Spiritual,1,2,2.0,2.0,0.0,ta
+Politics,Curious,1,2,2.0,2.0,0.0,ta
+Politics,Shocking,1,2,2.0,2.0,0.0,ta
+Sports,Controversy,1,2,2.0,2.0,0.0,ta
+Sports,Emotion,1,2,2.0,2.0,0.0,ta
+Sports,Pride,1,2,2.0,2.0,0.0,ta
+Sports,excitement,1,2,2.0,2.0,0.0,ta
+Lifestyle,Fear/Concern,2,2,1.0,1.0,-50.0,ta

@@ -1,5 +1,13 @@
 Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
-Entertainment,Controversy,6,175.0,22.5,29.166666666666668,18.421052631578938,hi
-Crime,Shock -VE,9,180.0,21.0,20.0,10.526315789473696,hi
-Current-Affairs,Shock -VE,5,115.0,18.0,23.0,-5.263157894736848,hi
-Off-beat,Surprise +VE,5,83.0,17.0,16.6,-10.526315789473683,hi
+Crime,Anger/ Rage,13,349,22.0,26.846153846153847,29.41176470588236,hi
+Crime,Shock -VE,23,437,20.0,19.0,17.647058823529417,hi
+Off-beat,Surprise +VE,15,270,18.0,18.0,5.882352941176472,hi
+Entertainment,Controvery,10,214,18.0,21.4,5.882352941176472,hi
+Current-Affairs,Shock -VE,19,329,17.0,17.31578947368421,0.0,hi
+Off-beat,Funny/ Laughter,14,246,17.0,17.571428571428573,0.0,hi
+Off-beat,Shock -VE,13,232,17.0,17.846153846153847,0.0,hi
+Current-Affairs,Happiness/ Joy,9,949,17.0,105.44444444444444,0.0,hi
+Sports,Happiness/ Joy,9,151,17.0,16.77777777777778,0.0,hi
+Current-Affairs,Breaking News,20,310,15.5,15.5,-8.823529411764708,hi
+Current-Affairs,Wow! Amazing!,9,132,15.0,14.666666666666666,-11.764705882352944,hi
+International Politics,Breaking News,8,126,14.5,15.75,-14.70588235294118,hi

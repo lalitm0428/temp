@@ -1,115 +1,287 @@
 Genre.1,Emotions.1,posts
-Entertainment,Controversy,45
-Current-Affairs,Shock -VE,41
-Crime,Shock -VE,38
-Off-beat,Shock -VE,21
-Current-Affairs,Fear/Concern,20
-Entertainment,Curiosity,20
-Current-Affairs,Surprise +VE,16
-Politics,Surprise +VE,15
-Sports,Happiness,15
-Entertainment,Shock -VE,14
-Politics,Shock -VE,14
-Current-Affairs,Breaking News,14
-Business,Shock -VE,14
-Off-beat,Surprise +VE,14
-Entertainment,Surprise +VE,13
-Politics,Controversy,13
-Off-beat,Heartwarming,13
+Entertainment,Controversy,73
+Crime,Shock -VE,65
+Current-Affairs,Shock -VE,61
+Crime,Shocking,46
+Curent-Affairs,Shocking,41
+Current-Affairs,Breaking News,40
+Politics,Curious,37
+Off-beat,Surprise +VE,34
+Off-beat,Shock -VE,34
+Crime,Anger,34
+Entertainment,Curiosity,27
+Lifestyle,Fear/Concern,26
+Entertainment,Happiness,26
+Entertainment,Shock -VE,24
+Sports,Controversy,22
+Entertainment,Happy,22
+Sports,Pride,22
+Off-beat,Heartwarming,21
+International Politics,Shocking,21
+Current-Affairs,Anger,21
+Entertainment,Shocking,21
+Current-Affairs,Surprise +VE,21
+Entertainment,Fandom,20
+Entertainment,Surprise +VE,20
+Curent-Affairs,Happy,20
+Politics,Controversy,20
+Entertainment,Curious,19
+Sports,Happiness,18
+International Politics,Breaking News,18
+Politics,Happy,16
+Curent-Affairs,Shock,16
+Crime,Shock,16
+Sports,Surprise +VE,15
+Business,Happy,15
+Current-Affairs,Fear/Concern,15
+Off-beat,Shocking,15
+Politics,Surprise,15
+Politics,excitement,15
+Politics,Shocking,14
+Off-beat,Funny/ Laughter,14
+Business,Shocking,14
+Curent-Affairs,Surprise,13
+Current-Affairs,Sadness,13
+Curent-Affairs,Sad,13
+Entertainment,Sad,13
+Crime,Anger/ Rage,13
+Entertainment,Pride,13
 Current-Affairs,Controversy,13
-Politics,Curiosity,13
+Sports,Breaking News,12
+Lifestyle,Shocking,12
+Lifestyle,Curious,12
+Lifestyle,Shock,12
+Sports,Sadness,11
 Entertainment,Sadness,11
-Current-Affairs,Sadness,11
-Entertainment,Happiness,11
-Sports,Curiosity,11
-Sports,Surprise +VE,11
-Sports,Controversy,11
+Current-Affairs,Curiosity,11
+Curent-Affairs,Curious,11
+Off-beat,Curiosity,11
+International Politics,Anger,11
+Entertainment,excitement,11
+Current-Affairs,Wow! Amazing!,10
+Entertainment,Wow! Amazing!,10
+Politics,Pride,10
+Politics,Shock -VE,10
+Entertainment,Controvery,10
 International Politics,Shock -VE,10
-Current-Affairs,Happiness,10
-Current-Affairs,Curiosity,10
-Entertainment,Pride,9
-International Politics,Fear/Concern,9
-Current-Affairs,Wow! Amazing!,8
-Entertainment,Fandom,8
-Off-beat,Happiness,7
-Current-Affairs,Anger,7
-Entertainment,Wow! Amazing!,7
-Off-beat,Curiosity,7
-Sports,Pride,7
-Business,Surprise +VE,6
-Politics,Pride,6
-Off-beat,Funny,6
-Sports,Sadness,6
-Crime,Anger,6
-Lifestyle,Curiosity,6
-Sports,Wow! Amazing!,5
-Off-beat,Wow! Amazing!,5
-Sports,Breaking News,5
-Entertainment,Fear/Concern,5
-Off-beat,Controversy,5
-Lifestyle,Fear/Concern,5
-Off-beat,Fear/Concern,4
-Sports,Fandom,4
+Sports,Shock -VE,9
+Sports,Curiosity,9
+Curent-Affairs,Fear/Concern,9
+Off-beat,Wow! Amazing!,9
+Off-beat,Surprise,9
+Current-Affairs,Happiness/ Joy,9
+Sports,Happiness/ Joy,9
+Business,Curious,9
+Entertainment,Gossip,8
+Entertainment,Surprise,8
+Curent-Affairs,excitement,8
+Off-beat,Sadness,8
+Off-beat,Pride,8
+Curent-Affairs,Proud,8
+Sports,Shocking,8
+Crime,Sad,8
+Crime,Curious,8
+Entertainment,Happiness/ Joy,7
+Sports,Sad,7
+Politics,Shock,7
+Sports,Wow! Amazing!,7
+Business,Breaking News,7
+Lifestyle,Curiosity,7
+International Politics,Sadness,7
+Int others,Shock -VE,7
+Sports,excitement,7
+Politics,Anger,7
+Sports,Funny,7
+Sports,Happy,7
+Off-beat,Curious,6
+Crime,Happy,6
+Off-beat,Proud,6
+Off-beat,Shock,6
+Business,Fear/Concern,6
+Sports,Shock,6
+Crime,Sadness,6
+Business,Wow! Amazing!,6
+Sports,Controvery,6
+Lifestyle,Happy,5
+Off-beat,excitement,5
+Politics,Happiness,5
+Current-Affairs,Anger/ Rage,5
+Lifestyle,Sad,5
+Off-beat,Funny,5
+Lifestyle,Surprise +VE,5
+Sports,Proud,5
+Entertainment,Anger,5
+Entertainment,Shock,5
+International Politics,Happy,5
+Politics,Breaking News,5
+Current-Affairs,Controvery,5
+Entertainment,empathy,5
+Current-Affairs,Patriotism,5
+Sports,Heartwarming,5
+Business,Surprise,5
+International Politics,Funny,4
+Off-beat,Motivation,4
+Current-Affairs,Pride,4
+Business,Surprise +VE,4
+Curent-Affairs,Anger,4
 Off-beat,Anger,4
-Sports,Shock -VE,3
-Sports,Heartwarming,3
-Lifestyle,Shock -VE,3
-Politics,Breaking News,3
-Lifestyle,Surprise +VE,3
-Crime,Surprise +VE,3
-Entertainment,Breaking News,3
-Current-Affairs,Heartwarming,3
-Current-Affairs,Pride,3
-Politics,Wow! Amazing!,3
-Off-beat,Sadness,3
-International Politics,Breaking News,3
-Off-beat,Motivation,3
+Lifestyle,Shock -VE,4
+Off-beat,Happiness,4
+Off-beat,Sad,4
+Spiritual,Spiritual,4
+Sports,Surprise,4
+Curent-Affairs,Controversy,4
+Sports,Funny/ Laughter,4
+Business,Shock -VE,4
+Off-beat,Happiness/ Joy,4
+Spiritual,Happy,4
+Business,excitement,4
+International Politics,Controversy,3
+International Politics,Funny/ Laughter,3
+International Politics,Controvery,3
 Int others,Curiosity,3
-Business,Curiosity,3
-Entertainment,Funny,3
-Current-Affairs,Devotion/Spiritual,2
-Entertainment,Patriotism,2
-Crime,Sadness,2
-Business,Wow! Amazing!,2
-Entertainment,Heartwarming,2
-Sports,Awe/ I didn't know that!,2
+Current Affairs,Breaking News,3
+Current-Affairs,Happiness,3
+Politics,Curiosity,3
+Off-beat,Fear/Concern,3
+Off-beat,Controversy,3
+International Politics,Shock,3
+Lifestyle,excitement,3
+Sports,Anger,3
+Business,Anger,3
+Business,Motivation,3
+Entertainment,Funny/ Laughter,3
+Entertainment,Proud,3
+Business,Sad,3
+International Politics,Curiosity,3
+International Politics,Patriotism,3
+International Politics,Curious,3
+Curent-Affairs,empathy,2
+Crime,Controvery,2
+Sports,Curious,2
+Crime,Fear/Concern,2
+Crime,Curiosity,2
+Politics,Funny,2
+Politics,Surprise +VE,2
+Politics,Wow! Amazing!,2
+Crime,Fear/ Concern,2
+Off-beat,Emotion,2
+Crime,Breaking News,2
+Politics,Patriotism,2
+Politics,Pride/Belonging,2
+Politics,Fear/Concern,2
+Politics,Heartwarming,2
+Off-beat,Spiritual,2
+Politics,Controvery,2
+Off-beat,Happy,2
+Crime,Wow! Amazing!,2
+Off-beat,Controvery,2
+Crime,excitement,2
 Lifestyle,Wow! Amazing!,2
+Lifestyle,Surprise,2
+International Politics,Surprise,2
+Job,Shock -VE,2
+Job,Surprise +VE,2
+Job,Wow! Amazing!,2
+Entertainment,Pride/Belonging,2
 Int others,Controversy,2
-Int others,Shock -VE,2
-Off-beat,Pride,2
-Politics,Anger,2
-Crime,Curiosity,1
-Crime,Controversy,1
-Crime,Happiness,1
-Entertainment,Motivation,1
-Entertainment,Anger,1
-Crime,Wow! Amazing!,1
-Current-Affairs,Patriotism,1
-Current-Affairs,Concern,1
-Current-Affairs,Awe/ I didn't know that!,1
-Business,Breaking News,1
-Business,Awe/ I didn't know that!,1
-Business,Heartwarming,1
+Entertainment,Heartwarming,2
+Entertainment,Fear/Concern,2
+Current-Affairs,Fear/ Concern,2
+Entertainment,Emotion,2
+Sports,Patriotism,2
+Current-Affairs,wow,2
+Current-Affairs,Funny/ Laughter,2
+Entertainment,Motivation,2
+Current-Affairs,Heartwarming,2
+Sports,Emotion,2
+Business,Shock,2
+Sports,Fandom,2
+Business,Patriotism,2
+Int others,Anger/ Rage,2
+Int others,Sadness,2
+Current-Affairs,Motivation,2
+International Politics,Pride,2
+Curent-Affairs,sad,2
+International Politics,Fear/Concern,2
+Off-beat,Fear/ Concern,2
+Job,Shock,2
+Lifestyle,Pride,2
+Lifestyle,Happiness/ Joy,2
+Lifestyle,Fear/ Concern,2
+Current Affairs,Surprise,2
+Current Affairs,Controversy,2
 Business,Controversy,1
-Business,Fear/Concern,1
-Business,Happiness,1
-Crime,Fear/Concern,1
-International Politics,Curiosity,1
-Int others,Surprise +VE,1
-International Politics,Anger,1
-Off-beat,Patriotism,1
-Lifestyle,Devotion/Spiritual,1
-Lifestyle,Sadness,1
-International Politics,Happiness,1
-International Politics,Pride,1
-International Politics,Patriotism,1
-International Politics,Surprise +VE,1
-Lifestyle,Awe/ I didn't know that!,1
-Politics,Heartwarming,1
-Politics,Fear/Concern,1
-Politics,Funny,1
-Politics,Happiness,1
-Politics,Awe/ I didn't know that!,1
-Sports,Devotion/Spiritual,1
+Entertainment,Devotion/ spiritual,1
+Business,Curiosity,1
+Business,Heartwarming,1
+Entertainment,Anger/ Rage,1
+Business,Happiness/ Joy,1
+Business,Pride,1
+Business,Sadness,1
 Sports,Fear/Concern,1
 Sports,Motivation,1
+Curent-Affairs,proud,1
+International Politics,Sad,1
+International Politics,Fear/ Concern,1
+Entertainment,sad,1
+Int others,Surprise,1
+Int others,Happiness,1
+Int others,Wow! Amazing!,1
+Int others,Anger,1
+Int others,Funny,1
+Int others,Curious,1
+Int others,Controvery,1
+Int others,Surprise +VE,1
+Sports,Pride/Belonging,1
+Entertainment,Breaking News,1
+Current-Affairs,Pride/Belonging,1
+Entertainment,Patriotism,1
+Job,Proud,1
+Job,Motivation,1
+Job,Happy,1
+Job,Happiness,1
+Job,Fear/Concern,1
+Job,Breaking News,1
+Lifestyle,Emotion,1
+Lifestyle,Heartwarming,1
+Current-Affairs,"Awe/ ""I didn't know that""",1
+Job,excitement,1
+Job,Sadness,1
+Job,Sad,1
+Lifestyle,Breaking News,1
+Lifestyle,Devotion/ spiritual,1
+Current-Affairs,Awe/ I didn't know that!,1
+Current Affairs,Shock,1
+Crime,Surprise +VE,1
+Crime,Surprise,1
+Off-beat,Patriotism,1
+Off-beat,Pride/Belonging,1
+Off-beat,Anger/ Rage,1
+Off-beat,Devotion/ spiritual,1
+International Politics,Wow! Amazing!,1
+International Politics,Surprise +VE,1
+Curent-Affairs,Emotion,1
+Off-beat,empathy,1
+Curent-Affairs,Happiness,1
+Curent-Affairs,Patriotism,1
+Politics,Funny/ Laughter,1
+Curent-Affairs,Pride,1
+Politics,Anger/ Rage,1
+Off-beat,sad,1
+Business,proud,1
+Politics,empathy,1
+Politics,Spiritual,1
+Politics,Sad,1
+Politics,proud,1
+Crime,Funny,1
+Spiritual,Curious,1
+Spiritual,Emotion,1
+Spiritual,Shocking,1
+Spiritual,Shock,1
+Spiritual,excitement,1
+Sports,Anger/ Rage,1
+Sports,Surprize,1
+Sports,empathy,1
+Sports,proud,1
+Sports,suprise,1

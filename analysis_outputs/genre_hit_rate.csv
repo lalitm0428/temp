@@ -1,14 +1,35 @@
 Genre.1,posts,pct_above_median
-Int others,8,87.5
-Sports,86,70.93023255813954
-Entertainment,155,65.80645161290323
-Cultural,7,57.14285714285714
-Off-beat,95,52.63157894736842
-Patriotic,2,50.0
-Current-Affairs,161,49.68944099378882
-Lifestyle,22,36.36363636363637
-International Politics,28,32.142857142857146
-Crime,54,29.629629629629626
-Politics,74,27.027027027027028
-Business,31,19.35483870967742
-Job,6,16.666666666666664
+Gulf,3,100.0
+Cultural,4,100.0
+International Entertainment,1,100.0
+Patriotic,7,71.42857142857143
+Entertainment,379,64.37994722955145
+Current-Affairs,249,61.84738955823293
+Automotive,5,60.0
+Sports,219,56.16438356164384
+Int others,24,54.166666666666664
+Off-beat,233,50.64377682403433
+Politics,186,50.53763440860215
+International Politics,107,49.532710280373834
+Crime,219,45.20547945205479
+Business,94,44.680851063829785
+Job,17,41.17647058823529
+Lifestyle,105,32.38095238095238
+Curent-Affairs,156,19.230769230769234
+Offbeat,7,14.285714285714285
+Spiritual,13,7.6923076923076925
+Arts,1,0.0
+Informative,2,0.0
+Current affairs,1,0.0
+"Current affairs, Breaking",1,0.0
+Breaking/Politics,1,0.0
+Current,1,0.0
+Current Affairs,8,0.0
+Breaking,2,0.0
+Health,1,0.0
+Food,1,0.0
+International,1,0.0
+business,4,0.0
+current,4,0.0
+entertainment,1,0.0
+sports,1,0.0

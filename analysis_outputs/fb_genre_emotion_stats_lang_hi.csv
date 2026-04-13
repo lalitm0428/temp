@@ -1,5 +1,10 @@
 Genre.1,Emotions.1,posts,total_reach,median_reach,mean_reach,lift_vs_filtered_median_pct,language
-Entertainment,Controversy,4,5110.0,800.0,1277.5,16.533139111434814,hi
-Crime,Shock -VE,10,67695.0,754.0,6769.5,9.832483612527309,hi
-Off-beat,Surprise +VE,5,7470.0,751.0,1494.0,9.39548434085944,hi
-Entertainment,Curiosity,5,1976.0,249.0,395.2,-63.72906045156592,hi
+Off-beat,Funny/ Laughter,9,67986,3920.0,7554.0,332.6710816777042,hi
+Off-beat,Shock -VE,12,154131,2186.5,12844.25,141.3355408388521,hi
+Crime,Shock -VE,16,1588952,2118.5,99309.5,133.83002207505518,hi
+Crime,Anger/ Rage,10,199108,1387.0,19910.8,53.09050772626931,hi
+Off-beat,Surprise +VE,10,85822,1293.0,8582.2,42.71523178807948,hi
+Entertainment,Controvery,8,97658,798.5,12207.25,-11.865342163355407,hi
+Current-Affairs,Wow! Amazing!,8,9274,353.5,1159.25,-60.982339955849895,hi
+Current-Affairs,Shock -VE,13,299650,343.0,23050.0,-62.14128035320088,hi
+Current-Affairs,Breaking News,18,14991,330.0,832.8333333333334,-63.576158940397356,hi

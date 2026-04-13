@@ -14,11 +14,13 @@ from weasyprint import HTML
 MIN_POSTS = 8
 FALLBACK_THRESHOLDS = (8, 5, 4)
 MIN_COMBO_BUCKETS = 4
+MAX_BAR_COUNT = 8
+NO_THRESHOLD_LANGUAGES = {'ta'}
 NEUTRAL_MEDIAN_BAND_MIN = 100
 NEUTRAL_MEDIAN_BAND_MAX = 750
 NEUTRAL_MEDIAN_BAND_PCT = 0.15
 
-SRC = Path('/Users/apple/temp/DH Social Media Metrics FB Data.csv')
+SRC = Path('/Users/apple/temp/analysis_outputs/Updated-Genre-Data/Facebook_Genre_Emotion_Post_Impressions_Analysis.csv')
 OUT = Path('/Users/apple/temp/analysis_outputs')
 CHARTS = OUT / 'charts' / 'fb'
 LANGUAGE_REPORTS = OUT / 'language_reports' / 'fb'
@@ -28,6 +30,8 @@ LANGUAGE_REPORTS.mkdir(parents=True, exist_ok=True)
 
 HTML_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_8plus.html'
 PDF_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_8plus.pdf'
+TOP20_PLATFORM_HTML_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_Top20.html'
+TOP20_PLATFORM_PDF_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_Top20.pdf'
 
 
 def ascii_safe(text: object) -> str:
@@ -67,17 +71,23 @@ def clean_frame(df: pd.DataFrame) -> pd.DataFrame:
         out['permalink'] = out.get('permalink_url')
 
     if 'media_type' not in out.columns:
-        video_views = pd.to_numeric(out.get('post_video_views'), errors='coerce').fillna(0)
+        video_views_source = out['views'] if 'views' in out.columns else pd.Series(np.nan, index=out.index)
+        video_views = pd.to_numeric(video_views_source, errors='coerce').fillna(0)
         out['media_type'] = np.where(video_views > 0, 'video', 'post')
 
     # Use labeled taxonomy columns when available.
-    if 'Genre.1' not in out.columns and 'Genre' in out.columns:
-        out['Genre.1'] = out['Genre']
+    if 'Genre.1' not in out.columns:
+        if 'Genre' in out.columns:
+            out['Genre.1'] = out['Genre']
+        elif 'genre' in out.columns:
+            out['Genre.1'] = out['genre']
     if 'Emotions.1' not in out.columns:
         if 'Emotion' in out.columns:
             out['Emotions.1'] = out['Emotion']
         elif 'Emotions' in out.columns:
             out['Emotions.1'] = out['Emotions']
+        elif 'emotion' in out.columns:
+            out['Emotions.1'] = out['emotion']
 
     numeric_cols = [
         'reach', 'views', 'likes', 'comments', 'shares', 'saved', 'total_interactions'
@@ -94,7 +104,7 @@ def clean_frame(df: pd.DataFrame) -> pd.DataFrame:
             out[col] = out[col].astype(str).str.strip()
             out[col] = out[col].replace({'nan': np.nan, 'None': np.nan, '': np.nan})
 
-    out['post_date'] = pd.to_datetime(out.get('post_created_date'), format='%d-%b-%Y', errors='coerce')
+    out['post_date'] = pd.to_datetime(out.get('post_created_date'), errors='coerce')
     return out
 
 
@@ -104,8 +114,25 @@ def to_html_table(df: pd.DataFrame, max_rows: int = 25) -> str:
     formatted = df.head(max_rows).copy()
     for col in formatted.columns:
         if pd.api.types.is_numeric_dtype(formatted[col]):
-            formatted[col] = formatted[col].map(format_human_number)
+            if is_percentage_column(col):
+                formatted[col] = formatted[col].map(format_percentage_value)
+            else:
+                formatted[col] = formatted[col].map(format_human_number)
     return formatted.to_html(index=False, classes='data-table', border=0, justify='left', escape=False)
+
+
+def is_percentage_column(column_name: object) -> bool:
+    col = str(column_name).strip().lower()
+    return col.endswith('%') or 'pct' in col or 'percent' in col
+
+
+def format_percentage_value(value: object) -> str:
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return ''
+    if isinstance(value, (int, np.integer, float, np.floating)):
+        text = f"{float(value):.1f}".rstrip('0').rstrip('.')
+        return f"{text}%"
+    return str(value)
 
 
 def format_human_number(value: object) -> str:
@@ -168,6 +195,25 @@ def safe_token(value: str) -> str:
     return token or 'unknown'
 
 
+def threshold_warning_html(section: dict, base_threshold: int = MIN_POSTS, low_volume: bool = False) -> str:
+    threshold = int(section.get('threshold', base_threshold))
+    if low_volume:
+        return (
+            '<div class="warning">'
+            f'Warning: Low-volume fallback page. Standard threshold ({base_threshold} posts) was not met. '
+            'This view is descriptive only and should be treated as directional.'
+            '</div>'
+        )
+    if threshold >= base_threshold:
+        return ''
+    return (
+        '<div class="warning">'
+        f'Warning: Fallback threshold in use ({threshold} posts vs default {base_threshold}). '
+        'These results are based on a smaller sample and should be treated as directional.'
+        '</div>'
+    )
+
+
 def filter_with_threshold(lang_df: pd.DataFrame, threshold: int) -> dict:
     genre_counts_all = (
         lang_df.groupby('Genre.1', dropna=False)
@@ -225,13 +271,24 @@ def pick_adaptive_threshold(lang_df: pd.DataFrame, min_combo_buckets: int = MIN_
     return filter_with_threshold(lang_df, FALLBACK_THRESHOLDS[-1])
 
 
-def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
-    threshold_result = pick_adaptive_threshold(lang_df)
+def build_language_payload(
+    language: str,
+    lang_df: pd.DataFrame,
+    forced_threshold: int | None = None,
+    top_posts_limit: int = 10,
+) -> dict:
+    if forced_threshold is not None:
+        threshold_result = filter_with_threshold(lang_df, int(forced_threshold))
+    elif normalize_language(language) in NO_THRESHOLD_LANGUAGES:
+        threshold_result = filter_with_threshold(lang_df, 1)
+    else:
+        threshold_result = pick_adaptive_threshold(lang_df)
     threshold = threshold_result['threshold']
     removed_genres = threshold_result['removed_genres']
     removed_combos = threshold_result['removed_combos']
     filtered_genre = threshold_result['filtered_genre']
     filtered_combo = threshold_result['filtered_combo']
+    top_posts_limit = max(1, int(top_posts_limit))
 
     if filtered_combo.empty:
         return {
@@ -340,7 +397,7 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
         .copy()
         .sort_values(['median_reach', 'posts'], ascending=[False, False])
     )
-    low_supply_performing['action'] = 'Experiment by increasing supply'
+    low_supply_performing['action'] = 'Experiment by increasing post frequency'
 
     pareto_genre = genre_stats[['Genre.1', 'posts', 'total_reach']].copy().sort_values('total_reach', ascending=False)
     total_genre_reach = float(pareto_genre['total_reach'].sum()) if len(pareto_genre) else 0.0
@@ -371,10 +428,10 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
     top_posts = (
         posts.merge(top_10_combos[['Genre.1', 'Emotions.1']], on=['Genre.1', 'Emotions.1'], how='inner')
         .sort_values('reach', ascending=False)
-        .head(10)
+        .head(top_posts_limit)
     )
     if top_posts.empty:
-        top_posts = posts.sort_values('reach', ascending=False).head(10)
+        top_posts = posts.sort_values('reach', ascending=False).head(top_posts_limit)
 
     bottom_posts = (
         posts.merge(
@@ -417,8 +474,62 @@ def build_language_payload(language: str, lang_df: pd.DataFrame) -> dict:
         'top_5_genres': top_5_genres,
         'top_10_combos': top_10_combos,
         'top_posts': top_posts,
+        'top_posts_display_rows': top_posts_limit,
         'bottom_posts': bottom_posts,
         'empty': False,
+    }
+
+
+def build_low_volume_payload(language: str, lang_df: pd.DataFrame, threshold: int) -> dict:
+    low_df = lang_df.copy()
+    benchmark_median = float(low_df['reach'].median()) if len(low_df) else float('nan')
+
+    genre_stats = (
+        low_df.groupby('Genre.1')
+        .agg(
+            posts=('reach', 'size'),
+            total_reach=('reach', 'sum'),
+            median_reach=('reach', 'median'),
+            mean_reach=('reach', 'mean'),
+        )
+        .reset_index()
+        .sort_values(['posts', 'median_reach'], ascending=[False, False])
+    )
+
+    combo_stats = (
+        low_df.groupby(['Genre.1', 'Emotions.1'])
+        .agg(
+            posts=('reach', 'size'),
+            total_reach=('reach', 'sum'),
+            median_reach=('reach', 'median'),
+            mean_reach=('reach', 'mean'),
+        )
+        .reset_index()
+        .sort_values(['posts', 'median_reach'], ascending=[False, False])
+    )
+
+    for col in ['post_created_date', 'reach', 'Genre.1', 'Emotions.1', 'caption', 'permalink']:
+        if col not in low_df.columns:
+            low_df[col] = np.nan
+
+    posts = low_df[['post_created_date', 'reach', 'Genre.1', 'Emotions.1', 'caption', 'permalink']].copy()
+    posts['caption'] = posts['caption'].astype(str).map(lambda x: ascii_safe(' '.join(x.split())[:140]))
+    posts['Genre.1'] = posts['Genre.1'].astype(str).map(ascii_safe)
+    posts['Emotions.1'] = posts['Emotions.1'].astype(str).map(ascii_safe)
+    posts['permalink'] = posts['permalink'].map(
+        lambda u: f'<a href="{u}" target="_blank">link</a>' if isinstance(u, str) and u.startswith('http') else ''
+    )
+    top_posts = posts.sort_values('reach', ascending=False).head(10)
+
+    return {
+        'language': language,
+        'threshold': threshold,
+        'labeled_rows': len(low_df),
+        'labeled_date_range': format_date_range(low_df['post_date']),
+        'benchmark_median': benchmark_median,
+        'genre_stats': genre_stats,
+        'combo_stats': combo_stats,
+        'top_posts': top_posts,
     }
 
 
@@ -458,19 +569,21 @@ def add_charts_to_payload(payload: dict) -> dict:
     ):
         raise ValueError(f'Chart dataset includes rows below threshold={threshold} for language={lang}')
 
+    genre_chart_data = genre_stats_plot.sort_values('median_reach', ascending=False).head(MAX_BAR_COUNT).copy()
     fig_genre = px.bar(
-        genre_stats_plot.sort_values('median_reach', ascending=True),
+        genre_chart_data.sort_values('median_reach', ascending=True),
         x='median_reach', y='Genre.1', orientation='h', text='posts',
         color='median_reach', color_continuous_scale='Tealgrn',
         labels={'median_reach': 'Median Reach', 'Genre.1': 'Genre'}
     )
     fig_genre.update_layout(title=f'Facebook {lang.upper()}: Genre Median Reach (posts >= {threshold})')
 
+    pareto_genre_chart_data = pareto_genre_plot.head(MAX_BAR_COUNT).copy()
     fig_pareto = make_subplots(specs=[[{'secondary_y': True}]])
     fig_pareto.add_trace(
         go.Bar(
-            x=pareto_genre_plot['Genre.1'],
-            y=pareto_genre_plot['reach_share_pct'],
+            x=pareto_genre_chart_data['Genre.1'],
+            y=pareto_genre_chart_data['reach_share_pct'],
             name='Reach Share %',
             marker_color='#1d4ed8'
         ),
@@ -478,8 +591,8 @@ def add_charts_to_payload(payload: dict) -> dict:
     )
     fig_pareto.add_trace(
         go.Scatter(
-            x=pareto_genre_plot['Genre.1'],
-            y=pareto_genre_plot['cum_reach_pct'],
+            x=pareto_genre_chart_data['Genre.1'],
+            y=pareto_genre_chart_data['cum_reach_pct'],
             mode='lines+markers',
             name='Cumulative Reach %',
             line=dict(color='#0f766e', width=3)
@@ -491,7 +604,7 @@ def add_charts_to_payload(payload: dict) -> dict:
     fig_pareto.update_yaxes(title_text='Cumulative Reach %', secondary_y=True, range=[0, 105])
     fig_pareto.update_layout(title=f'Facebook {lang.upper()}: Pareto by Genre (posts >= {threshold})')
 
-    top_combo_median = combo_stats_plot.head(12).copy()
+    top_combo_median = combo_stats_plot.head(MAX_BAR_COUNT).copy()
     top_combo_median['combo'] = top_combo_median.apply(lambda r: f"{r['Genre.1']} | {r['Emotions.1']}", axis=1)
     fig_combo_median = px.bar(
         top_combo_median.sort_values('median_reach', ascending=True),
@@ -501,7 +614,7 @@ def add_charts_to_payload(payload: dict) -> dict:
     )
     fig_combo_median.update_layout(title=f'Facebook {lang.upper()}: Genre x Emotion by Median Reach (posts >= {threshold})')
 
-    top_combo_share = pareto_combo_plot.head(12).copy()
+    top_combo_share = pareto_combo_plot.head(MAX_BAR_COUNT).copy()
     top_combo_share['combo'] = top_combo_share.apply(lambda r: f"{r['Genre.1']} | {r['Emotions.1']}", axis=1)
     fig_combo_share = px.bar(
         top_combo_share.sort_values('reach_share_pct', ascending=True),
@@ -526,6 +639,7 @@ def render_language_section(section: dict, idx: int) -> str:
     lang_label = section['language'].upper()
     threshold = section['threshold']
     page_break = '<div class="page-break"></div>' if idx > 0 else ''
+    warning_html = threshold_warning_html(section)
 
     top_5_table = to_html_table(
         section['top_5_genres'][['Genre.1', 'posts', 'median_reach', 'total_reach', 'lift_vs_filtered_median_pct', 'pct_above_median']]
@@ -582,6 +696,8 @@ def render_language_section(section: dict, idx: int) -> str:
         25,
     )
 
+    top_posts_display_rows = max(1, int(section.get('top_posts_display_rows', 10)))
+
     top_posts_table = to_html_table(
         section['top_posts'][['post_created_date', 'reach', 'Genre.1', 'Emotions.1', 'caption', 'permalink']]
         .rename(columns={
@@ -591,7 +707,7 @@ def render_language_section(section: dict, idx: int) -> str:
             'Emotions.1': 'Emotion',
             'caption': 'Caption',
         }),
-        10,
+        top_posts_display_rows,
     )
 
     supply_columns = ['Genre.1', 'Emotions.1', 'posts', 'median_reach', 'lift_vs_filtered_median_pct', 'action']
@@ -650,6 +766,7 @@ def render_language_section(section: dict, idx: int) -> str:
       <span class="chip">Removed genre x emotion (&lt;{threshold}): {len(section['removed_combos'])}</span>
       <span class="chip">Pareto 80% genres: {section['genres_to_80']}</span>
       <span class="chip">Pareto 80% genre x emotion: {section['combos_to_80']}</span>
+            {warning_html}
     </section>
 
     <section class="section two">
@@ -675,24 +792,24 @@ def render_language_section(section: dict, idx: int) -> str:
     </section>
 
         <section class="section">
-            <h2>{lang_label}: Supply x Performance Actions</h2>
+            <h2>{lang_label}: Post Frequency x Performance Actions</h2>
             <div class="two">
                 <div>
-                    <h3>Genre x Emotion with Supply and Performing</h3>
+                    <h3>Genre x Emotion with Post Frequency and Performing</h3>
                     {high_supply_performing_table}
                 </div>
                 <div>
-                    <h3>Genre x Emotion with Supply and Neutral</h3>
+                    <h3>Genre x Emotion with Post Frequency and Neutral</h3>
                     {high_supply_neutral_table}
                 </div>
             </div>
             <div class="two" style="margin-top:10px;">
                 <div>
-                    <h3>Genre x Emotion with Supply and Not Performing</h3>
+                    <h3>Genre x Emotion with Post Frequency and Not Performing</h3>
                     {high_supply_not_performing_table}
                 </div>
                 <div>
-                    <h3>Genre x Emotion with Low Supply and Performing</h3>
+                    <h3>Genre x Emotion with Low Post Frequency and Performing</h3>
                     {low_supply_performing_table}
                 </div>
             </div>
@@ -732,7 +849,7 @@ def render_language_section(section: dict, idx: int) -> str:
     </section>
 
         <section class="section">
-            <h2>{lang_label}: Bottom Post Examples (Supply and Not Performing)</h2>
+            <h2>{lang_label}: Bottom Post Examples (Post Frequency and Not Performing)</h2>
             {bottom_posts_table}
         </section>
     """
@@ -776,6 +893,7 @@ def build_single_language_html(section: dict) -> str:
                 .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
         .data-table th {{ background: #edf3f9; font-weight: 700; }}
         .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+        .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
         .muted {{ color: #5c6b7a; font-size: 12px; }}
                 @media print {{
                     .top-nav {{ display: none !important; }}
@@ -812,16 +930,214 @@ def build_single_language_html(section: dict) -> str:
 """
 
 
+def build_low_volume_language_html(section: dict) -> str:
+    language_label = section['language'].upper()
+    threshold = int(section['threshold'])
+    warning_html = threshold_warning_html(section, low_volume=True)
+
+    genre_table = to_html_table(
+        section['genre_stats'][['Genre.1', 'posts', 'median_reach', 'total_reach']]
+        .rename(columns={
+            'Genre.1': 'Genre',
+            'posts': 'Posts',
+            'median_reach': 'Median Reach',
+            'total_reach': 'Total Reach',
+        })
+        .round(1),
+        20,
+    )
+
+    combo_table = to_html_table(
+        section['combo_stats'][['Genre.1', 'Emotions.1', 'posts', 'median_reach', 'total_reach']]
+        .rename(columns={
+            'Genre.1': 'Genre',
+            'Emotions.1': 'Emotion',
+            'posts': 'Posts',
+            'median_reach': 'Median Reach',
+            'total_reach': 'Total Reach',
+        })
+        .round(1),
+        25,
+    )
+
+    top_posts_table = to_html_table(
+        section['top_posts'][['post_created_date', 'reach', 'Genre.1', 'Emotions.1', 'caption', 'permalink']]
+        .rename(columns={
+            'post_created_date': 'Date',
+            'reach': 'Reach',
+            'Genre.1': 'Genre',
+            'Emotions.1': 'Emotion',
+            'caption': 'Caption',
+        }),
+        10,
+    )
+
+    return f"""
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Facebook Reach Report ({language_label}) - Low Volume</title>
+    <style>
+        @page {{ size: A4 landscape; margin: 10mm; }}
+        * {{ box-sizing: border-box; }}
+        body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
+        .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
+        .top-nav {{ margin-bottom: 10px; }}
+        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #065f46; background: #d8faf3; border: 1px solid #7adfd0; border-radius: 999px; padding: 8px 12px; }}
+        .hero {{ background: linear-gradient(135deg, #1f2937 0%, #0f766e 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
+        .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
+        .hero p {{ margin: 0; font-size: 13px; }}
+        .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }}
+        .kpi {{ background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 8px; }}
+        .kpi .k {{ font-size: 10px; text-transform: uppercase; opacity: .9; }}
+        .kpi .v {{ font-size: 20px; font-weight: 700; margin-top: 2px; }}
+        .section {{ margin-top: 12px; border: 1px solid #cfd9e5; border-radius: 14px; padding: 12px; background: #f7f9fc; }}
+        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #0b3c5d; }}
+        .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
+        .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
+        .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
+        .data-table th {{ background: #edf3f9; font-weight: 700; }}
+        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+        .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
+        .muted {{ color: #5c6b7a; font-size: 12px; }}
+        @media print {{ .top-nav {{ display: none !important; }} .two {{ display: block; }} .two > div {{ margin-bottom: 10px; }} }}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <nav class="top-nav">
+            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+        </nav>
+        <section class="hero">
+            <h1>Facebook Reach Report: {language_label} (Low Volume)</h1>
+            <p>This fallback page is generated when standard thresholding cannot form enough Genre x Emotion buckets.</p>
+            <div class="grid">
+                <div class="kpi"><div class="k">Language</div><div class="v">{language_label}</div></div>
+                <div class="kpi"><div class="k">Rows</div><div class="v">{format_human_number(section['labeled_rows'])}</div></div>
+                <div class="kpi"><div class="k">Median Reach</div><div class="v">{format_human_number(section['benchmark_median'])}</div></div>
+                <div class="kpi"><div class="k">Threshold Not Met</div><div class="v">{threshold}</div></div>
+            </div>
+            <p style="margin-top:8px;font-size:12px;">Date range: {section['labeled_date_range']}</p>
+        </section>
+
+        {warning_html}
+
+        <section class="section">
+            <h2>Low-Volume Explanation</h2>
+            <p class="muted">No Genre x Emotion combinations met the minimum-post threshold needed for the full analysis. This page shows descriptive stats without threshold filtering.</p>
+        </section>
+
+        <section class="section two">
+            <div>
+                <h2>Top Genres</h2>
+                {genre_table}
+            </div>
+            <div>
+                <h2>Top Genre x Emotion</h2>
+                {combo_table}
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Top Post Examples</h2>
+            {top_posts_table}
+        </section>
+    </div>
+</body>
+</html>
+"""
+
+
+def build_platform_top20_html(platform_label: str, section: dict) -> str:
+    section_html = render_language_section(section, 0)
+    top_n = max(1, int(section.get('top_posts_display_rows', 20)))
+
+    return f"""
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{platform_label} Reach Report (Top {top_n} Posts Genre Analysis)</title>
+    <style>
+        @page {{ size: A4 landscape; margin: 10mm; }}
+        * {{ box-sizing: border-box; }}
+        body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
+        .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
+        .top-nav {{ margin-bottom: 10px; }}
+        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #065f46; background: #d8faf3; border: 1px solid #7adfd0; border-radius: 999px; padding: 8px 12px; }}
+        .back-link:hover {{ background: #c7f4ea; }}
+        .hero {{ background: linear-gradient(135deg, #0f766e 0%, #1d4ed8 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
+        .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
+        .hero p {{ margin: 0; font-size: 13px; }}
+        .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }}
+        .kpi {{ background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 8px; }}
+        .kpi .k {{ font-size: 10px; text-transform: uppercase; opacity: .9; }}
+        .kpi .v {{ font-size: 20px; font-weight: 700; margin-top: 2px; }}
+        .section {{ margin-top: 12px; border: 1px solid #cfd9e5; border-radius: 14px; padding: 12px; background: #f7f9fc; page-break-inside: auto; break-inside: auto; }}
+        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #0b3c5d; }}
+        .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
+        .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
+        .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
+        .chart img {{ width: 100%; height: auto; display: block; }}
+        .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
+        .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
+        .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
+        .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
+        .data-table th {{ background: #edf3f9; font-weight: 700; }}
+        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+        .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
+        .muted {{ color: #5c6b7a; font-size: 12px; }}
+        @media print {{
+            .top-nav {{ display: none !important; }}
+            .two {{ display: block; }}
+            .two > div {{ margin-bottom: 10px; }}
+            .chart img {{ max-height: 105mm; object-fit: contain; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <nav class="top-nav">
+            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+        </nav>
+        <section class="hero">
+            <h1>{platform_label} Reach Report: Top {top_n} Posts Genre Analysis</h1>
+            <p>Genre and Genre x Emotion analysis computed only from the top {top_n} posts by reach.</p>
+            <div class="grid">
+                <div class="kpi"><div class="k">Scope</div><div class="v">Top {top_n}</div></div>
+                <div class="kpi"><div class="k">Rows in Scope</div><div class="v">{format_human_number(section['labeled_rows'])}</div></div>
+                <div class="kpi"><div class="k">Rows After Filters</div><div class="v">{format_human_number(section['filtered_rows'])}</div></div>
+                <div class="kpi"><div class="k">Threshold Used</div><div class="v">{section['threshold']}</div></div>
+            </div>
+            <p style="margin-top:8px;font-size:12px;">
+                Date range: {section['labeled_date_range']}
+            </p>
+        </section>
+
+        {section_html}
+    </div>
+</body>
+</html>
+"""
+
+
 def main() -> None:
     df = clean_frame(pd.read_csv(SRC, low_memory=False))
     df['language_norm'] = df.get('language', 'unknown').map(normalize_language)
     labeled = df[df['reach'].notna() & df['Genre.1'].notna() & df['Emotions.1'].notna()].copy()
+    top_20_posts = labeled.sort_values('reach', ascending=False).head(20).copy()
 
     language_counts = labeled['language_norm'].value_counts()
     languages = language_counts.index.tolist()
 
     language_sections = []
     skipped_languages = []
+    low_volume_sections = []
+    low_volume_html_files = []
+    low_volume_pdf_files = []
 
     for language in languages:
         lang_df = labeled[labeled['language_norm'] == language].copy()
@@ -830,6 +1146,21 @@ def main() -> None:
 
         if payload['empty']:
             skipped_languages.append(language)
+            low_payload = build_low_volume_payload(language, lang_df, int(payload['threshold']))
+            low_volume_sections.append(low_payload)
+
+            slug = safe_token(language)
+            low_html_path = LANGUAGE_REPORTS / f'Reach_Genre_Emotion_Report_FB_8plus_{slug}.html'
+            low_pdf_path = LANGUAGE_REPORTS / f'FB_Reach_Report_Language_{slug.upper()}.pdf'
+            low_html = build_low_volume_language_html(low_payload)
+            low_html_path.write_text(low_html, encoding='utf-8')
+            low_volume_html_files.append(low_html_path)
+
+            try:
+                HTML(string=low_html).write_pdf(str(low_pdf_path))
+                low_volume_pdf_files.append(low_pdf_path)
+            except Exception as exc:
+                print(f'PDF generation skipped for low-volume {language}:', exc)
             continue
 
         slug = safe_token(language)
@@ -858,7 +1189,9 @@ def main() -> None:
     overall_labeled_date_range = format_date_range(labeled['post_date'])
 
     threshold_overview = ', '.join(f"{s['language'].upper()}={s['threshold']}" for s in language_sections)
+    low_threshold_text = ', '.join(s['language'].upper() for s in language_sections if int(s['threshold']) < MIN_POSTS) or 'None'
     skipped_text = ', '.join(x.upper() for x in skipped_languages) if skipped_languages else 'None'
+    low_volume_text = ', '.join(s['language'].upper() for s in low_volume_sections) if low_volume_sections else 'None'
 
     sections_html = ''.join(render_language_section(section, idx) for idx, section in enumerate(language_sections))
 
@@ -896,6 +1229,7 @@ def main() -> None:
         .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
     .data-table th {{ background: #edf3f9; font-weight: 700; }}
     .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+    .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
     .muted {{ color: #5c6b7a; font-size: 12px; }}
         @media print {{
             .top-nav {{ display: none !important; }}
@@ -927,7 +1261,9 @@ def main() -> None:
       <span class="chip">Languages analyzed: {', '.join(s['language'].upper() for s in language_sections)}</span>
       <span class="chip">Threshold by language: {threshold_overview}</span>
             <span class="chip">Overall labeled date range: {overall_labeled_date_range}</span>
+    <span class="chip">Low-threshold pages (&lt;{MIN_POSTS}): {low_threshold_text}</span>
       <span class="chip">Languages skipped: {skipped_text}</span>
+    <span class="chip">Low-volume pages generated: {low_volume_text}</span>
       <p class="muted">Each language is processed independently. Lower thresholds (5 then 4) apply only to that language when 8 is too sparse.</p>
     </section>
 
@@ -961,13 +1297,42 @@ def main() -> None:
         except Exception as exc:
             print(f'PDF generation skipped for {section["language"]}:', exc)
 
+    top20_html_generated = False
+    top20_pdf_generated = False
+    if not top_20_posts.empty:
+        top20_payload = build_language_payload(
+            'Top 20 Posts',
+            top_20_posts,
+            forced_threshold=1,
+            top_posts_limit=20,
+        )
+        if not top20_payload['empty']:
+            top20_payload = add_charts_to_payload(top20_payload)
+            top20_html = build_platform_top20_html('Facebook', top20_payload)
+            TOP20_PLATFORM_HTML_PATH.write_text(top20_html, encoding='utf-8')
+            top20_html_generated = True
+
+            try:
+                HTML(string=top20_html).write_pdf(str(TOP20_PLATFORM_PDF_PATH))
+                top20_pdf_generated = True
+            except Exception as exc:
+                print('Top-20 platform PDF generation skipped:', exc)
+
     print('Generated HTML:', HTML_PATH)
     print('Generated PDF:', PDF_PATH)
     print('Languages included:', ', '.join(s['language'] for s in language_sections))
     print('Thresholds:', threshold_overview)
     print('Generated language HTML files:', ', '.join(str(p) for p in language_html_files))
+    if low_volume_html_files:
+        print('Generated low-volume language HTML files:', ', '.join(str(p) for p in low_volume_html_files))
     if language_pdf_files:
         print('Generated language PDF files:', ', '.join(str(p) for p in language_pdf_files))
+    if low_volume_pdf_files:
+        print('Generated low-volume language PDF files:', ', '.join(str(p) for p in low_volume_pdf_files))
+    if top20_html_generated:
+        print('Generated top-20 platform HTML file:', TOP20_PLATFORM_HTML_PATH)
+    if top20_pdf_generated:
+        print('Generated top-20 platform PDF file:', TOP20_PLATFORM_PDF_PATH)
 
 
 if __name__ == '__main__':

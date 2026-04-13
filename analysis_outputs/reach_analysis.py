@@ -2,11 +2,22 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-SRC = Path('/Users/apple/temp/DH Social Media Metrics IG Base Data (1).csv')
+SRC = Path('/Users/apple/temp/analysis_outputs/Updated-Genre-Data/Instagram_Genre_Emotion_Reach_Analysis.csv')
 OUT = Path('/Users/apple/temp/analysis_outputs')
 OUT.mkdir(exist_ok=True)
 
 df = pd.read_csv(SRC, low_memory=False)
+
+if 'Genre.1' not in df.columns and 'genre' in df.columns:
+    df['Genre.1'] = df['genre']
+if 'Emotions.1' not in df.columns and 'emotion' in df.columns:
+    df['Emotions.1'] = df['emotion']
+if 'media_type' not in df.columns:
+    df['media_type'] = 'post'
+if 'caption' not in df.columns:
+    df['caption'] = np.nan
+if 'permalink' not in df.columns and 'permalink_url' in df.columns:
+    df['permalink'] = df['permalink_url']
 
 for c in ['reach', 'views', 'likes', 'comments', 'shares', 'saved', 'total_interactions']:
     if c in df.columns:
