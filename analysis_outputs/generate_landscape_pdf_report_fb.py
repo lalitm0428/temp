@@ -9,7 +9,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from weasyprint import HTML
+try:
+    from weasyprint import HTML
+except Exception:
+    HTML = None
 
 MIN_POSTS = 8
 FALLBACK_THRESHOLDS = (8, 5, 4)
@@ -20,8 +23,9 @@ NEUTRAL_MEDIAN_BAND_MIN = 100
 NEUTRAL_MEDIAN_BAND_MAX = 750
 NEUTRAL_MEDIAN_BAND_PCT = 0.15
 
-SRC = Path('/Users/apple/temp/analysis_outputs/Updated-Genre-Data/Facebook_Genre_Emotion_Post_Impressions_Analysis.csv')
-OUT = Path('/Users/apple/temp/analysis_outputs')
+BASE_DIR = Path(__file__).resolve().parent
+SRC = BASE_DIR / 'Updated-Genre-Data' / 'Facebook_Genre_Emotion_Post_Impressions_Analysis.csv'
+OUT = BASE_DIR
 CHARTS = OUT / 'charts' / 'fb'
 LANGUAGE_REPORTS = OUT / 'language_reports' / 'fb'
 OUT.mkdir(exist_ok=True)
@@ -32,6 +36,23 @@ HTML_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_8plus.html'
 PDF_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_8plus.pdf'
 TOP20_PLATFORM_HTML_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_Top20.html'
 TOP20_PLATFORM_PDF_PATH = OUT / 'Reach_Genre_Emotion_Report_FB_Top20.pdf'
+
+BACK_LINK_HISTORY_SCRIPT = """
+    <script>
+        (function () {
+            const backLink = document.querySelector('.back-link');
+            if (!backLink) {
+                return;
+            }
+            backLink.addEventListener('click', function (event) {
+                if (window.history.length > 1) {
+                    event.preventDefault();
+                    window.history.back();
+                }
+            });
+        })();
+    </script>
+"""
 
 
 def ascii_safe(text: object) -> str:
@@ -869,32 +890,32 @@ def build_single_language_html(section: dict) -> str:
     <style>
         @page {{ size: A4 landscape; margin: 10mm; }}
         * {{ box-sizing: border-box; }}
-        body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
+        body {{ font-family: "Manrope", "Helvetica Neue", Arial, sans-serif; color: #414042; margin: 0; background: linear-gradient(180deg, #ffffff 0%, #fcfcfa 56%, #f3f5f4 100%); }}
         .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
         .top-nav {{ margin-bottom: 10px; }}
-        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #065f46; background: #d8faf3; border: 1px solid #7adfd0; border-radius: 999px; padding: 8px 12px; }}
-        .back-link:hover {{ background: #c7f4ea; }}
-        .hero {{ background: linear-gradient(135deg, #0f766e 0%, #1d4ed8 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
+        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 700; color: #414042; background: #ffffff; border: 1px solid #d8ded9; border-radius: 999px; padding: 8px 12px; }}
+        .back-link:hover {{ background: #f3f5f4; }}
+        .hero {{ background: linear-gradient(135deg, #F05A28 0%, #F7941D 45%, #8CC63F 78%, #48B2DC 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(65, 64, 66, 0.12); }}
         .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
         .hero p {{ margin: 0; font-size: 13px; }}
         .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }}
         .kpi {{ background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 8px; }}
         .kpi .k {{ font-size: 10px; text-transform: uppercase; opacity: .9; }}
         .kpi .v {{ font-size: 20px; font-weight: 700; margin-top: 2px; }}
-                .section {{ margin-top: 12px; border: 1px solid #cfd9e5; border-radius: 14px; padding: 12px; background: #f7f9fc; page-break-inside: auto; break-inside: auto; }}
-        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #0b3c5d; }}
+                .section {{ margin-top: 12px; border: 1px solid #d8ded9; border-radius: 14px; padding: 12px; background: #ffffff; page-break-inside: auto; break-inside: auto; }}
+        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #2f2f2e; }}
         .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
-        .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
+        .chart {{ border: 1px solid #dde4df; border-radius: 12px; padding: 8px; background: #fff; }}
         .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
         .chart img {{ width: 100%; height: auto; display: block; }}
                 .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
         .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
         .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
                 .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
-        .data-table th {{ background: #edf3f9; font-weight: 700; }}
-        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+        .data-table th {{ background: #f3f5f4; font-weight: 700; }}
+        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #f8b58a; background: #fff1e8; color: #7a2f0b; font-size: 10px; margin: 0 6px 6px 0; }}
         .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
-        .muted {{ color: #5c6b7a; font-size: 12px; }}
+        .muted {{ color: #5f5f5d; font-size: 12px; }}
                 @media print {{
                     .top-nav {{ display: none !important; }}
                     .two {{ display: block; }}
@@ -906,7 +927,7 @@ def build_single_language_html(section: dict) -> str:
 <body>
     <div class="wrap">
         <nav class="top-nav">
-            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+            <a class="back-link" href="../../Report_Navigation.html">&larr; Back to Analysis Dashboard</a>
         </nav>
         <section class="hero">
             <h1>Facebook Reach Report: {language_label}</h1>
@@ -925,6 +946,7 @@ def build_single_language_html(section: dict) -> str:
 
         {section_html}
     </div>
+{BACK_LINK_HISTORY_SCRIPT}
 </body>
 </html>
 """
@@ -982,33 +1004,33 @@ def build_low_volume_language_html(section: dict) -> str:
     <style>
         @page {{ size: A4 landscape; margin: 10mm; }}
         * {{ box-sizing: border-box; }}
-        body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
+        body {{ font-family: "Manrope", "Helvetica Neue", Arial, sans-serif; color: #414042; margin: 0; background: linear-gradient(180deg, #ffffff 0%, #fcfcfa 56%, #f3f5f4 100%); }}
         .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
         .top-nav {{ margin-bottom: 10px; }}
-        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #065f46; background: #d8faf3; border: 1px solid #7adfd0; border-radius: 999px; padding: 8px 12px; }}
-        .hero {{ background: linear-gradient(135deg, #1f2937 0%, #0f766e 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
+        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 700; color: #414042; background: #ffffff; border: 1px solid #d8ded9; border-radius: 999px; padding: 8px 12px; }}
+        .hero {{ background: linear-gradient(135deg, #F05A28 0%, #F7941D 45%, #8CC63F 78%, #48B2DC 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(65, 64, 66, 0.12); }}
         .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
         .hero p {{ margin: 0; font-size: 13px; }}
         .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }}
         .kpi {{ background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 8px; }}
         .kpi .k {{ font-size: 10px; text-transform: uppercase; opacity: .9; }}
         .kpi .v {{ font-size: 20px; font-weight: 700; margin-top: 2px; }}
-        .section {{ margin-top: 12px; border: 1px solid #cfd9e5; border-radius: 14px; padding: 12px; background: #f7f9fc; }}
-        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #0b3c5d; }}
+        .section {{ margin-top: 12px; border: 1px solid #d8ded9; border-radius: 14px; padding: 12px; background: #ffffff; page-break-inside: auto; break-inside: auto; }}
+        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #2f2f2e; }}
         .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
         .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
         .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
-        .data-table th {{ background: #edf3f9; font-weight: 700; }}
-        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+        .data-table th {{ background: #f3f5f4; font-weight: 700; }}
+        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #f8b58a; background: #fff1e8; color: #7a2f0b; font-size: 10px; margin: 0 6px 6px 0; }}
         .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
-        .muted {{ color: #5c6b7a; font-size: 12px; }}
+        .muted {{ color: #5f5f5d; font-size: 12px; }}
         @media print {{ .top-nav {{ display: none !important; }} .two {{ display: block; }} .two > div {{ margin-bottom: 10px; }} }}
     </style>
 </head>
 <body>
     <div class="wrap">
         <nav class="top-nav">
-            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+            <a class="back-link" href="../../Report_Navigation.html">&larr; Back to Analysis Dashboard</a>
         </nav>
         <section class="hero">
             <h1>Facebook Reach Report: {language_label} (Low Volume)</h1>
@@ -1045,6 +1067,7 @@ def build_low_volume_language_html(section: dict) -> str:
             {top_posts_table}
         </section>
     </div>
+{BACK_LINK_HISTORY_SCRIPT}
 </body>
 </html>
 """
@@ -1064,32 +1087,32 @@ def build_platform_top20_html(platform_label: str, section: dict) -> str:
     <style>
         @page {{ size: A4 landscape; margin: 10mm; }}
         * {{ box-sizing: border-box; }}
-        body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
+        body {{ font-family: "Manrope", "Helvetica Neue", Arial, sans-serif; color: #414042; margin: 0; background: linear-gradient(180deg, #ffffff 0%, #fcfcfa 56%, #f3f5f4 100%); }}
         .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
         .top-nav {{ margin-bottom: 10px; }}
-        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #065f46; background: #d8faf3; border: 1px solid #7adfd0; border-radius: 999px; padding: 8px 12px; }}
-        .back-link:hover {{ background: #c7f4ea; }}
-        .hero {{ background: linear-gradient(135deg, #0f766e 0%, #1d4ed8 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
+        .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 700; color: #414042; background: #ffffff; border: 1px solid #d8ded9; border-radius: 999px; padding: 8px 12px; }}
+        .back-link:hover {{ background: #f3f5f4; }}
+        .hero {{ background: linear-gradient(135deg, #F05A28 0%, #F7941D 45%, #8CC63F 78%, #48B2DC 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(65, 64, 66, 0.12); }}
         .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
         .hero p {{ margin: 0; font-size: 13px; }}
         .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }}
         .kpi {{ background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 8px; }}
         .kpi .k {{ font-size: 10px; text-transform: uppercase; opacity: .9; }}
         .kpi .v {{ font-size: 20px; font-weight: 700; margin-top: 2px; }}
-        .section {{ margin-top: 12px; border: 1px solid #cfd9e5; border-radius: 14px; padding: 12px; background: #f7f9fc; page-break-inside: auto; break-inside: auto; }}
-        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #0b3c5d; }}
+        .section {{ margin-top: 12px; border: 1px solid #d8ded9; border-radius: 14px; padding: 12px; background: #ffffff; page-break-inside: auto; break-inside: auto; }}
+        .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #2f2f2e; }}
         .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
-        .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
+        .chart {{ border: 1px solid #dde4df; border-radius: 12px; padding: 8px; background: #fff; }}
         .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
         .chart img {{ width: 100%; height: auto; display: block; }}
         .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
         .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
         .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
         .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
-        .data-table th {{ background: #edf3f9; font-weight: 700; }}
-        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+        .data-table th {{ background: #f3f5f4; font-weight: 700; }}
+        .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #f8b58a; background: #fff1e8; color: #7a2f0b; font-size: 10px; margin: 0 6px 6px 0; }}
         .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
-        .muted {{ color: #5c6b7a; font-size: 12px; }}
+        .muted {{ color: #5f5f5d; font-size: 12px; }}
         @media print {{
             .top-nav {{ display: none !important; }}
             .two {{ display: block; }}
@@ -1101,7 +1124,7 @@ def build_platform_top20_html(platform_label: str, section: dict) -> str:
 <body>
     <div class="wrap">
         <nav class="top-nav">
-            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+            <a class="back-link" href="Report_Navigation.html">&larr; Back to Analysis Dashboard</a>
         </nav>
         <section class="hero">
             <h1>{platform_label} Reach Report: Top {top_n} Posts Genre Analysis</h1>
@@ -1119,6 +1142,7 @@ def build_platform_top20_html(platform_label: str, section: dict) -> str:
 
         {section_html}
     </div>
+{BACK_LINK_HISTORY_SCRIPT}
 </body>
 </html>
 """
@@ -1156,11 +1180,14 @@ def main() -> None:
             low_html_path.write_text(low_html, encoding='utf-8')
             low_volume_html_files.append(low_html_path)
 
-            try:
-                HTML(string=low_html).write_pdf(str(low_pdf_path))
-                low_volume_pdf_files.append(low_pdf_path)
-            except Exception as exc:
-                print(f'PDF generation skipped for low-volume {language}:', exc)
+            if HTML is not None:
+                try:
+                    HTML(string=low_html).write_pdf(str(low_pdf_path))
+                    low_volume_pdf_files.append(low_pdf_path)
+                except Exception as exc:
+                    print(f'PDF generation skipped for low-volume {language}:', exc)
+            else:
+                print(f'PDF generation skipped for low-volume {language}: WeasyPrint is not available in this environment.')
             continue
 
         slug = safe_token(language)
@@ -1205,32 +1232,32 @@ def main() -> None:
   <style>
     @page {{ size: A4 landscape; margin: 10mm; }}
     * {{ box-sizing: border-box; }}
-    body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #102a43; margin: 0; background: #edf1f5; }}
+    body {{ font-family: "Manrope", "Helvetica Neue", Arial, sans-serif; color: #414042; margin: 0; background: linear-gradient(180deg, #ffffff 0%, #fcfcfa 56%, #f3f5f4 100%); }}
     .wrap {{ max-width: 1700px; margin: 0 auto; padding: 16px; }}
     .top-nav {{ margin-bottom: 10px; }}
-    .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 600; color: #065f46; background: #d8faf3; border: 1px solid #7adfd0; border-radius: 999px; padding: 8px 12px; }}
-    .back-link:hover {{ background: #c7f4ea; }}
-    .hero {{ background: linear-gradient(135deg, #0f766e 0%, #1d4ed8 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08); }}
+    .back-link {{ display: inline-block; text-decoration: none; font-size: 13px; font-weight: 700; color: #414042; background: #ffffff; border: 1px solid #d8ded9; border-radius: 999px; padding: 8px 12px; }}
+    .back-link:hover {{ background: #f3f5f4; }}
+    .hero {{ background: linear-gradient(135deg, #F05A28 0%, #F7941D 45%, #8CC63F 78%, #48B2DC 100%); color: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(65, 64, 66, 0.12); }}
     .hero h1 {{ margin: 0 0 4px 0; font-size: 24px; }}
     .hero p {{ margin: 0; font-size: 13px; }}
     .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }}
     .kpi {{ background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 8px; }}
     .kpi .k {{ font-size: 10px; text-transform: uppercase; opacity: .9; }}
     .kpi .v {{ font-size: 20px; font-weight: 700; margin-top: 2px; }}
-        .section {{ margin-top: 12px; border: 1px solid #cfd9e5; border-radius: 14px; padding: 12px; background: #f7f9fc; page-break-inside: auto; break-inside: auto; }}
-    .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #0b3c5d; }}
+        .section {{ margin-top: 12px; border: 1px solid #d8ded9; border-radius: 14px; padding: 12px; background: #ffffff; page-break-inside: auto; break-inside: auto; }}
+    .section h2 {{ margin: 0 0 6px 0; font-size: 18px; color: #2f2f2e; }}
     .two {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }}
-    .chart {{ border: 1px solid #dbe4ee; border-radius: 12px; padding: 8px; background: #fff; }}
+    .chart {{ border: 1px solid #dde4df; border-radius: 12px; padding: 8px; background: #fff; }}
     .chart h3 {{ margin: 0 0 6px 0; font-size: 14px; }}
     .chart img {{ width: 100%; height: auto; display: block; }}
         .chart, .kpi, .chip {{ page-break-inside: avoid; break-inside: avoid; }}
     .data-table {{ width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }}
     .data-table th, .data-table td {{ border-bottom: 1px solid #d9e2ec; padding: 4px; text-align: left; vertical-align: top; word-wrap: break-word; }}
         .data-table tr {{ page-break-inside: avoid; break-inside: avoid; }}
-    .data-table th {{ background: #edf3f9; font-weight: 700; }}
-    .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #7adfd0; background: #d8faf3; color: #065f46; font-size: 10px; margin: 0 6px 6px 0; }}
+    .data-table th {{ background: #f3f5f4; font-weight: 700; }}
+    .chip {{ display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #f8b58a; background: #fff1e8; color: #7a2f0b; font-size: 10px; margin: 0 6px 6px 0; }}
     .warning {{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid #f59e0b; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 600; }}
-    .muted {{ color: #5c6b7a; font-size: 12px; }}
+    .muted {{ color: #5f5f5d; font-size: 12px; }}
         @media print {{
             .top-nav {{ display: none !important; }}
             .two {{ display: block; }}
@@ -1243,7 +1270,7 @@ def main() -> None:
 <body>
   <div class="wrap">
         <nav class="top-nav">
-            <a class="back-link" href="/analysis_outputs/Report_Navigation.html">&larr; Back to Report Navigation</a>
+            <a class="back-link" href="Report_Navigation.html">&larr; Back to Analysis Dashboard</a>
         </nav>
     <section class="hero">
     <h1>Facebook Reach Report: Genre and Genre x Emotion by Language</h1>
@@ -1269,6 +1296,7 @@ def main() -> None:
 
     {sections_html}
   </div>
+{BACK_LINK_HISTORY_SCRIPT}
 </body>
 </html>
 """
@@ -1276,10 +1304,13 @@ def main() -> None:
     HTML_PATH.write_text(html, encoding='utf-8')
 
     # Keep PDF generation best-effort so HTML delivery always succeeds.
-    try:
-        HTML(string=html).write_pdf(str(PDF_PATH))
-    except Exception as exc:
-        print('PDF generation skipped:', exc)
+    if HTML is not None:
+        try:
+            HTML(string=html).write_pdf(str(PDF_PATH))
+        except Exception as exc:
+            print('PDF generation skipped:', exc)
+    else:
+        print('PDF generation skipped: WeasyPrint is not available in this environment.')
 
     language_html_files = []
     language_pdf_files = []
@@ -1291,11 +1322,14 @@ def main() -> None:
         lang_html_path.write_text(lang_html, encoding='utf-8')
         language_html_files.append(lang_html_path)
 
-        try:
-            HTML(string=lang_html).write_pdf(str(lang_pdf_path))
-            language_pdf_files.append(lang_pdf_path)
-        except Exception as exc:
-            print(f'PDF generation skipped for {section["language"]}:', exc)
+        if HTML is not None:
+            try:
+                HTML(string=lang_html).write_pdf(str(lang_pdf_path))
+                language_pdf_files.append(lang_pdf_path)
+            except Exception as exc:
+                print(f'PDF generation skipped for {section["language"]}:', exc)
+        else:
+            print(f'PDF generation skipped for {section["language"]}: WeasyPrint is not available in this environment.')
 
     top20_html_generated = False
     top20_pdf_generated = False
@@ -1312,11 +1346,14 @@ def main() -> None:
             TOP20_PLATFORM_HTML_PATH.write_text(top20_html, encoding='utf-8')
             top20_html_generated = True
 
-            try:
-                HTML(string=top20_html).write_pdf(str(TOP20_PLATFORM_PDF_PATH))
-                top20_pdf_generated = True
-            except Exception as exc:
-                print('Top-20 platform PDF generation skipped:', exc)
+            if HTML is not None:
+                try:
+                    HTML(string=top20_html).write_pdf(str(TOP20_PLATFORM_PDF_PATH))
+                    top20_pdf_generated = True
+                except Exception as exc:
+                    print('Top-20 platform PDF generation skipped:', exc)
+            else:
+                print('Top-20 platform PDF generation skipped: WeasyPrint is not available in this environment.')
 
     print('Generated HTML:', HTML_PATH)
     print('Generated PDF:', PDF_PATH)

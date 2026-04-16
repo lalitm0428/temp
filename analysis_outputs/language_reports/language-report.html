@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Language Report Template</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
+
+    :root {
+      --burnt-orange: #F05A28;
+      --leaf-green: #8CC63F;
+      --golden-yellow: #F7941D;
+      --sky-blue: #48B2DC;
+      --charcoal: #414042;
+      --paper: #fbfcfb;
+      --paper-soft: #f4f6f5;
+      --line: #d9dfdb;
+      --shadow: 0 16px 36px rgba(65, 64, 66, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Manrope', sans-serif;
+      color: var(--charcoal);
+      background:
+        radial-gradient(720px 460px at 8% -20%, rgba(240, 90, 40, 0.12), transparent 62%),
+        radial-gradient(700px 480px at 100% -24%, rgba(72, 178, 220, 0.12), transparent 62%),
+        linear-gradient(180deg, #ffffff 0%, var(--paper) 58%, var(--paper-soft) 100%);
+      min-height: 100%;
+    }
+
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 18px 18px 40px;
+    }
+
+    .back-nav {
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+      margin-bottom: 16px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #d4ddd7;
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 10px 22px rgba(65, 64, 66, 0.11);
+      padding: 10px 14px;
+      color: #343534;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .back-link:hover {
+      transform: translateY(-1px);
+      border-color: #bfcdc4;
+      box-shadow: 0 14px 24px rgba(65, 64, 66, 0.16);
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(240, 90, 40, 0.94) 0%, rgba(247, 148, 29, 0.92) 48%, rgba(72, 178, 220, 0.9) 100%);
+      color: #ffffff;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.04;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      max-width: 760px;
+      font-size: 15px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.96);
+    }
+
+    .content {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 16px;
+      box-shadow: 0 10px 22px rgba(65, 64, 66, 0.09);
+    }
+
+    .content h2 {
+      margin: 0 0 8px;
+      font-family: 'Sora', sans-serif;
+      font-size: 22px;
+      color: #303130;
+    }
+
+    .content p {
+      margin: 0;
+      font-size: 14px;
+      color: #606260;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 860px) {
+      .shell {
+        padding: 12px 12px 28px;
+      }
+
+      .hero {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="back-nav">
+      <a class="back-link" href="../Report_Navigation.html" aria-label="Back to Analysis Dashboard">
+        <span aria-hidden="true">←</span>
+        Back to Analysis Dashboard
+      </a>
+    </nav>
+
+    <section class="hero">
+      <h1>Language Report: {{LANGUAGE_NAME}}</h1>
+      <p>
+        Use this template shell for every language report page. Keep this hero block and back navigation consistent, then place report-specific charts, tables, and commentary below.
+      </p>
+    </section>
+
+    <section class="content">
+      <h2>Report Content Area</h2>
+      <p>
+        Replace this section with generated report output while preserving the back button component at the top.
+      </p>
+    </section>
+  </div>
+</body>
+</html>

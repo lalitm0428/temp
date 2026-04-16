@@ -3,301 +3,571 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Report Navigation Hub</title>
+  <title> Analysis Dashboard</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap');
 
     :root {
-      --ink: #14324a;
-      --muted: #4f6679;
-      --surface: #f7fafc;
-      --card: #ffffff;
-      --line: #cdd9e6;
-      --accent-1: #0f766e;
-      --accent-2: #1d4ed8;
-      --chip-bg: #d8faf3;
-      --chip-line: #7adfd0;
+      --burnt-orange: #F05A28;
+      --leaf-green: #8CC63F;
+      --golden-yellow: #F7941D;
+      --sky-blue: #48B2DC;
+      --charcoal: #414042;
+      --paper: #fcfcfa;
+      --paper-soft: #f3f5f4;
+      --line: #d8ded9;
+      --card-shadow: 0 18px 40px rgba(65, 64, 66, 0.11);
+      --card-shadow-hover: 0 24px 46px rgba(65, 64, 66, 0.16);
     }
 
     * {
       box-sizing: border-box;
     }
 
-    body {
-      margin: 0;
-      font-family: 'Manrope', 'Helvetica Neue', sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 10% 5%, rgba(29, 78, 216, 0.12), transparent 45%),
-        radial-gradient(circle at 90% 0%, rgba(15, 118, 110, 0.15), transparent 42%),
-        var(--surface);
-      min-height: 100vh;
+    html {
+      scroll-behavior: smooth;
     }
 
-    .shell {
-      max-width: 1100px;
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: 'Manrope', sans-serif;
+      color: var(--charcoal);
+      background:
+        radial-gradient(880px 500px at 8% -10%, rgba(240, 90, 40, 0.14), transparent 58%),
+        radial-gradient(840px 520px at 100% -18%, rgba(72, 178, 220, 0.13), transparent 62%),
+        linear-gradient(180deg, #ffffff 0%, var(--paper) 56%, var(--paper-soft) 100%);
+      position: relative;
+    }
+
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      border-radius: 999px;
+      filter: blur(28px);
+      opacity: 0.35;
+    }
+
+    body::before {
+      width: 220px;
+      height: 220px;
+      background: rgba(140, 198, 63, 0.4);
+      top: 8%;
+      right: 6%;
+      animation: drift 14s ease-in-out infinite;
+    }
+
+    body::after {
+      width: 180px;
+      height: 180px;
+      background: rgba(247, 148, 29, 0.4);
+      bottom: 12%;
+      left: 6%;
+      animation: drift 16s ease-in-out infinite reverse;
+    }
+
+    .site {
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 24px 20px 40px;
+      padding: 0 22px 68px;
+      position: relative;
+      z-index: 1;
     }
 
     .hero {
-      border-radius: 16px;
-      padding: 20px;
-      color: #fff;
-      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-      box-shadow: 0 8px 20px rgba(20, 50, 74, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      min-height: 100vh;
+      display: grid;
+      place-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 90px 0 112px;
+      position: relative;
     }
 
-    .hero h1 {
+    .eyebrow {
       margin: 0;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 28px;
-      letter-spacing: 0.2px;
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: #7a7a77;
+      animation: blur-entry 950ms cubic-bezier(0.2, 0.8, 0.22, 1) 90ms both;
     }
 
-    .hero p {
-      margin: 8px 0 0;
-      opacity: 0.95;
-      font-size: 14px;
+    .hero-title {
+      margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(42px, 8vw, 88px);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+      color: #2f2f2e;
+      animation: blur-entry 1.15s cubic-bezier(0.2, 0.8, 0.22, 1) both;
     }
 
-    .switcher {
-      margin-top: 18px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+    .hero-copy {
+      max-width: 760px;
+      margin: 0 auto;
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.62;
+      color: #5f5f5d;
+      animation: blur-entry 1.05s cubic-bezier(0.2, 0.8, 0.22, 1) 190ms both;
     }
 
-    .tab {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--ink);
+    .scroll-indicator {
+      position: absolute;
+      bottom: 34px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid #d6ddd7;
       border-radius: 999px;
       padding: 10px 16px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
-      cursor: pointer;
-      transition: 140ms ease;
+      color: #51514f;
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(4px);
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      box-shadow: 0 10px 24px rgba(65, 64, 66, 0.1);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      animation: nudge-down 2.2s ease-in-out infinite;
     }
 
-    .tab.active {
-      background: linear-gradient(135deg, #d8faf3, #d9e8ff);
-      border-color: #94b8ff;
-      box-shadow: 0 3px 8px rgba(29, 78, 216, 0.16);
+    .scroll-indicator:hover {
+      transform: translateX(-50%) translateY(-2px);
+      border-color: #bbc8bf;
+      box-shadow: 0 14px 26px rgba(65, 64, 66, 0.15);
     }
 
-    .panel {
-      display: none;
-      margin-top: 16px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--card);
-      box-shadow: 0 8px 18px rgba(20, 50, 74, 0.06);
-      padding: 16px;
+    .selection {
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid #d9dfda;
+      border-radius: 28px;
+      box-shadow: 0 16px 34px rgba(65, 64, 66, 0.08);
+      padding: 30px;
     }
 
-    .panel.active {
-      display: block;
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-end;
     }
 
-    .panel h2 {
+    .section-title {
       margin: 0;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 22px;
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(28px, 4.2vw, 48px);
+      letter-spacing: -0.02em;
+      color: #2f2f2e;
     }
 
-    .panel .sub {
+    .section-copy {
       margin: 8px 0 0;
-      color: var(--muted);
-      font-size: 13px;
+      max-width: 650px;
+      font-size: 15px;
+      color: #60605e;
+      line-height: 1.58;
     }
 
-    .group {
-      margin-top: 14px;
+    .platform-switch {
+      margin-top: 24px;
+      display: inline-flex;
       border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #f9fcff;
-      padding: 12px;
+      background: #ffffff;
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
     }
 
-    .group h3 {
-      margin: 0;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 16px;
+    .platform-chip {
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: #5e5e5b;
+      padding: 10px 16px;
+      font-weight: 700;
+      font-family: 'Manrope', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
     }
 
-    .links {
-      margin-top: 10px;
+    .platform-chip:hover {
+      transform: translateY(-1px);
+      background: #f2f6f4;
+    }
+
+    .platform-chip.active {
+      color: #263032;
+      background: #ecf7fc;
+      box-shadow: inset 0 0 0 1px #c5e6f2;
+    }
+
+    .platform-caption {
+      margin: 14px 0 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #6f6f6c;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .language-grid {
+      margin-top: 18px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .language-card {
+      border: 1px solid #dde4df;
+      border-radius: 20px;
+      padding: 18px;
+      text-decoration: none;
+      color: inherit;
+      background: #ffffff;
+      display: grid;
+      gap: 14px;
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .language-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 8px;
+      height: 100%;
+      background: var(--accent, var(--sky-blue));
+    }
+
+    .language-card:hover {
+      transform: translateY(-4px);
+      border-color: #cad8cf;
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
       gap: 10px;
     }
 
-    .item {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      border: 1px solid #dbe4ef;
-      border-radius: 12px;
-      background: #fff;
-      padding: 10px;
-      transition: 140ms ease;
-    }
-
-    .item:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(20, 50, 74, 0.1);
-      border-color: #9ec7ff;
-    }
-
-    .item .title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px;
+    .language-name {
       margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: 24px;
+      letter-spacing: -0.015em;
+      color: #303130;
     }
 
-    .item .meta {
-      margin-top: 5px;
-      color: var(--muted);
-      font-size: 12px;
-      word-break: break-all;
-    }
-
-    .badge {
-      margin-top: 4px;
-      display: inline-block;
-      font-size: 11px;
-      padding: 3px 8px;
+    .language-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border-radius: 999px;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-line);
-      color: #0d5b52;
+      min-width: 44px;
+      padding: 6px 10px;
+      background: #f3f6f5;
+      border: 1px solid #d7dfda;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #585a58;
     }
 
-    .hint {
+    .card-copy {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #666766;
+    }
+
+    .card-open {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 7px;
+      color: #383938;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      border-bottom: 2px solid rgba(65, 64, 66, 0.18);
+      padding-bottom: 2px;
+    }
+
+    .empty-state {
+      margin-top: 14px;
+      border: 1px dashed #ccd5cf;
+      border-radius: 16px;
+      background: #fbfcfb;
+      color: #626360;
+      padding: 18px;
+      font-weight: 600;
+    }
+
+    .footer-note {
       margin-top: 18px;
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 13px;
+      color: #747572;
+      line-height: 1.5;
+    }
+
+    @keyframes blur-entry {
+      from {
+        opacity: 0;
+        filter: blur(14px);
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes nudge-down {
+      0%,
+      100% {
+        transform: translateX(-50%) translateY(0);
+      }
+      50% {
+        transform: translateX(-50%) translateY(4px);
+      }
+    }
+
+    @keyframes drift {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(18px);
+      }
+    }
+
+    @media (max-width: 940px) {
+      .site {
+        padding: 0 14px 46px;
+      }
+
+      .hero {
+        min-height: 90vh;
+        padding: 74px 0 108px;
+      }
+
+      .selection {
+        border-radius: 22px;
+        padding: 20px;
+      }
+
+      .language-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
     }
   </style>
 </head>
 <body>
-  <main class="shell">
-    <section class="hero">
-      <h1>Analysis Report Hub</h1>
-      <p>Use this page to jump into any report quickly. Select a platform, then open the analysis you want.</p>
+  <main class="site">
+    <section class="hero" id="top">
+      <p class="eyebrow">  Analysis Hub</p>
+      <h1 class="hero-title">Genre Analysis Dashboard</h1>
+      <p class="hero-copy">
+        Live Report Canvas has been retired. This dashboard is now the single clean entry point for language-level report exploration across Instagram and Facebook.
+      </p>
+      <a class="scroll-indicator" href="#report-selection" aria-label="Scroll down for reports">
+        Scroll down for reports <span aria-hidden="true">↓</span>
+      </a>
     </section>
 
-    <div class="switcher" role="tablist" aria-label="Platforms">
-      <button class="tab active" data-target="fb" role="tab" aria-selected="true">Facebook Reports</button>
-      <button class="tab" data-target="ig" role="tab" aria-selected="false">Instagram Reports</button>
-    </div>
-
-    <section id="fb" class="panel active" role="tabpanel">
-      <h2>Facebook</h2>
-      <p class="sub">Open any language analysis directly.</p>
-
-      <div class="group">
-        <h3>Language Analyses</h3>
-        <div class="links">
-          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_en.html">
-            <p class="title">English (EN)</p>
-            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_en.html</p>
-          </a>
-          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_hi.html">
-            <p class="title">Hindi (HI)</p>
-            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_hi.html</p>
-          </a>
-          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ml.html">
-            <p class="title">Malayalam (ML)</p>
-            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ml.html</p>
-          </a>
-          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ta.html">
-            <p class="title">Tamil (TA)</p>
-            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ta.html</p>
-          </a>
-          <a class="item" href="/analysis_outputs/language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_te.html">
-            <p class="title">Telugu (TE)</p>
-            <p class="meta">language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_te.html</p>
-          </a>
+    <section class="selection" id="report-selection">
+      <header class="section-head">
+        <div>
+          <h2 class="section-title">Report Selection</h2>
+          <p class="section-copy">
+            Select a platform and open the language report you want to review. Every card routes directly to a dedicated report page.
+          </p>
         </div>
+      </header>
+
+      <div class="platform-switch" role="tablist" aria-label="Platform switcher">
+        <button class="platform-chip active" type="button" data-platform="instagram" role="tab" aria-selected="true">Instagram</button>
+        <button class="platform-chip" type="button" data-platform="facebook" role="tab" aria-selected="false">Facebook</button>
       </div>
 
-      <div class="group">
-        <h3>Platform Top-20 Analysis</h3>
-        <div class="links">
-          <a class="item" href="/analysis_outputs/Reach_Genre_Emotion_Report_FB_Top20.html">
-            <p class="title">Top 20 Posts Genre Breakup</p>
-            <p class="meta">Reach_Genre_Emotion_Report_FB_Top20.html</p>
-            <span class="badge">Platform-level</span>
-          </a>
-        </div>
-      </div>
+      <p class="platform-caption" id="platformCaption">Instagram language reports</p>
+      <div class="language-grid" id="languageGrid"></div>
+      <p class="footer-note">
+        Back navigation on language pages should use the same label and destination: Back to Analysis Dashboard.
+      </p>
     </section>
-
-    <section id="ig" class="panel" role="tabpanel" aria-hidden="true">
-      <h2>Instagram</h2>
-      <p class="sub">Open any language analysis directly.</p>
-
-      <div class="group">
-        <h3>Language Analyses</h3>
-        <div class="links">
-          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_en.html">
-            <p class="title">English (EN)</p>
-            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_en.html</p>
-          </a>
-          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_hi.html">
-            <p class="title">Hindi (HI)</p>
-            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_hi.html</p>
-          </a>
-          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_ml.html">
-            <p class="title">Malayalam (ML)</p>
-            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_ml.html</p>
-          </a>
-          <a class="item" href="/analysis_outputs/language_reports/Reach_Genre_Emotion_Report_8plus_ta.html">
-            <p class="title">Tamil (TA)</p>
-            <p class="meta">language_reports/Reach_Genre_Emotion_Report_8plus_ta.html</p>
-          </a>
-        </div>
-      </div>
-
-      <div class="group">
-        <h3>Platform Top-20 Analysis</h3>
-        <div class="links">
-          <a class="item" href="/analysis_outputs/Reach_Genre_Emotion_Report_IG_Top20.html">
-            <p class="title">Top 20 Posts Genre Breakup</p>
-            <p class="meta">Reach_Genre_Emotion_Report_IG_Top20.html</p>
-            <span class="badge">Platform-level</span>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <p class="hint">Tip: open this file locally, then click through any analysis page directly.</p>
   </main>
 
   <script>
-    const tabs = document.querySelectorAll('.tab');
-    const panels = document.querySelectorAll('.panel');
+    const REPORTS_BY_PLATFORM = {
+      instagram: [
+        {
+          language: 'Top 20 Analysis',
+          code: 'T20',
+          href: 'Reach_Genre_Emotion_Report_IG_Top20.html',
+          description: 'Open the Top 20 post analysis report for instagram.'
+        },
+        {
+          language: 'English',
+          code: 'EN',
+          href: 'language_reports/Reach_Genre_Emotion_Report_8plus_en.html'
+        },
+        {
+          language: 'Hindi',
+          code: 'HI',
+          href: 'language_reports/Reach_Genre_Emotion_Report_8plus_hi.html'
+        },
+        {
+          language: 'Malayalam',
+          code: 'ML',
+          href: 'language_reports/Reach_Genre_Emotion_Report_8plus_ml.html'
+        },
+        {
+          language: 'Tamil',
+          code: 'TA',
+          href: 'language_reports/Reach_Genre_Emotion_Report_8plus_ta.html'
+        }
+      ],
+      facebook: [
+        {
+          language: 'Top 20 Analysis',
+          code: 'T20',
+          href: 'Reach_Genre_Emotion_Report_FB_Top20.html',
+          description: 'Open the Top 20 post analysis report for facebook.'
+        },
+        {
+          language: 'English',
+          code: 'EN',
+          href: 'language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_en.html'
+        },
+        {
+          language: 'Hindi',
+          code: 'HI',
+          href: 'language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_hi.html'
+        },
+        {
+          language: 'Malayalam',
+          code: 'ML',
+          href: 'language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ml.html'
+        },
+        {
+          language: 'Tamil',
+          code: 'TA',
+          href: 'language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_ta.html'
+        },
+        {
+          language: 'Telugu',
+          code: 'TE',
+          href: 'language_reports/fb/Reach_Genre_Emotion_Report_FB_8plus_te.html'
+        }
+      ]
+    };
 
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        const target = tab.dataset.target;
+    const ACCENT_BY_CODE = {
+      T20: '#414042',
+      EN: '#48B2DC',
+      HI: '#F05A28',
+      ML: '#8CC63F',
+      TA: '#F7941D',
+      TE: '#48B2DC'
+    };
 
-        tabs.forEach((t) => {
-          const isActive = t === tab;
-          t.classList.toggle('active', isActive);
-          t.setAttribute('aria-selected', String(isActive));
-        });
+    const gridElement = document.getElementById('languageGrid');
+    const platformCaption = document.getElementById('platformCaption');
+    const platformButtons = Array.from(document.querySelectorAll('.platform-chip'));
 
-        panels.forEach((panel) => {
-          const isActive = panel.id === target;
-          panel.classList.toggle('active', isActive);
-          panel.setAttribute('aria-hidden', String(!isActive));
-        });
+    let activePlatform = 'instagram';
+
+    function readPlatformFromQuery() {
+      const query = new URLSearchParams(window.location.search);
+      const platform = query.get('platform');
+      if (platform && Object.prototype.hasOwnProperty.call(REPORTS_BY_PLATFORM, platform)) {
+        activePlatform = platform;
+      }
+    }
+
+    function renderPlatformButtons() {
+      platformButtons.forEach((button) => {
+        const isActive = button.dataset.platform === activePlatform;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', String(isActive));
+      });
+    }
+
+    function renderCards() {
+      const reports = REPORTS_BY_PLATFORM[activePlatform] || [];
+
+      if (!reports.length) {
+        gridElement.innerHTML = '<div class="empty-state">No language reports are available for this platform yet.</div>';
+        platformCaption.textContent = 'No reports available';
+        return;
+      }
+
+      platformCaption.textContent = `${activePlatform.charAt(0).toUpperCase()}${activePlatform.slice(1)} language reports`;
+      gridElement.innerHTML = reports.map((report) => {
+        const accent = ACCENT_BY_CODE[report.code] || '#48B2DC';
+        return `
+          <a class="language-card" href="${report.href}" style="--accent: ${accent};">
+            <div class="card-header">
+              <h3 class="language-name">${report.language}</h3>
+              <span class="language-code">${report.code}</span>
+            </div>
+            <p class="card-copy">
+              ${report.description || `Open the ${report.language} performance report for ${activePlatform}.`}
+            </p>
+            <span class="card-open">Open report <span aria-hidden="true">→</span></span>
+          </a>
+        `;
+      }).join('');
+    }
+
+    platformButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const nextPlatform = button.dataset.platform;
+        if (!nextPlatform || nextPlatform === activePlatform) {
+          return;
+        }
+        activePlatform = nextPlatform;
+        renderPlatformButtons();
+        renderCards();
       });
     });
+
+    readPlatformFromQuery();
+    renderPlatformButtons();
+    renderCards();
   </script>
 </body>
 </html>
