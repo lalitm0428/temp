@@ -507,8 +507,21 @@
     const gridElement = document.getElementById('languageGrid');
     const platformCaption = document.getElementById('platformCaption');
     const platformButtons = Array.from(document.querySelectorAll('.platform-chip'));
+    const REPORT_BASE_PATH = '/analysis_outputs/';
 
     let activePlatform = 'instagram';
+
+    function resolveReportHref(href) {
+      if (!href) {
+        return '#';
+      }
+
+      if (/^(?:https?:)?\/\//i.test(href) || href.startsWith('/')) {
+        return href;
+      }
+
+      return `${REPORT_BASE_PATH}${href.replace(/^\.\/?/, '')}`;
+    }
 
     function readPlatformFromQuery() {
       const query = new URLSearchParams(window.location.search);
@@ -538,8 +551,9 @@
       platformCaption.textContent = `${activePlatform.charAt(0).toUpperCase()}${activePlatform.slice(1)} language reports`;
       gridElement.innerHTML = reports.map((report) => {
         const accent = ACCENT_BY_CODE[report.code] || '#48B2DC';
+        const resolvedHref = resolveReportHref(report.href);
         return `
-          <a class="language-card" href="${report.href}" style="--accent: ${accent};">
+          <a class="language-card" href="${resolvedHref}" style="--accent: ${accent};">
             <div class="card-header">
               <h3 class="language-name">${report.language}</h3>
               <span class="language-code">${report.code}</span>
